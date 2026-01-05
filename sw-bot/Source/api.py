@@ -226,26 +226,7 @@ def close_ticket():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.post("/bridge/ship_type")
-def ship_type():
-    ip = request.remote_addr
-    if not helpers.check_rate(ip):
-        return jsonify({'error': 'slow down'}), 429
 
-    ship_data = request.json
-    project_name = ship_data.get('projectName')
-    description = ship_data.get('description')
-    repo_url = ship_data.get('repoUrl')
-    readme_url = ship_data.get('readmeUrl')
-    demo_url = ship_data.get('demoUrl')
-    print(f"Project received: {ship_data}")
-    project_type = helpers.get_type(title=project_name, desc=description, readme=helpers.fetch_readme(readme_url=readme_url),demo_url=demo_url, repo_url=repo_url)
-    print(f"project classified, {project_name}: {project_type}")
-    project_id = ship_data.get("ftProjectId")
-    print("attempting to save type...")
-    insert_project_type(project_id, project_type)
-    print("saved type.")
-    return jsonify({'ok': True})
 
 
 @socketio.on('join_ticket')
