@@ -15,7 +15,6 @@ AVAILABLE_TYPES = [
     "Minecraft Mods", "Hardware", "Android App", "iOS App", "Other"
 ]
 
-HACKAI_API = os.getenv('HACKAI_API').split(',')
 
 def check_rate(ip):
     now = datetime.now()
