@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const cfg: NextConfig = {
+  output: 'standalone',
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'avatars.slack-edge.com' },
