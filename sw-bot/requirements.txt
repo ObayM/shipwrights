@@ -1,0 +1,8 @@
+requests
+python-dotenv
+mysql-connector-python
+slack-bolt
+flask
+flask-socketio
+flask-cors
+blinker
