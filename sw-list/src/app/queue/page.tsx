@@ -1,6 +1,8 @@
 import { db } from '@/lib/db'
 import { ShipsBg } from '@/components/ships-bg'
 
+export const dynamic = 'force-dynamic'
+
 async function load() {
   const now = new Date()
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
