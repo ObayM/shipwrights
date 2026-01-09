@@ -107,6 +107,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'missing description and links' }, { status: 400 })
     }
 
+    const recent = await prisma.shipCert.findFirst({
+      where: {
+        ftProjectId: String(ftProjectId),
+        createdAt: { gte: new Date(Date.now() - 5000) },
+      },
+    })
+
+    if (recent) {
+      await syslog(
+        'ft_dup_blocked',
+        200,
+        null,
+        `dup blocked: ${projectName} (ft#${ftProjectId})`,
+        { ip, userAgent },
+        { metadata: { ftProjectId, existingCertId: recent.id } }
+      )
+      return NextResponse.json({ status: 'ok' })
+    }
+
     const cert = await prisma.shipCert.create({
       data: {
         ftProjectId: String(ftProjectId),
