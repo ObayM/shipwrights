@@ -69,3 +69,29 @@ export function withParams<P = { id: string }>(perm?: string) {
       return handler({ user: user as User, req, ip, ua, params: p })
     }
 }
+
+export function yswsApi(handler: (req: NextRequest) => Promise<NextResponse>) {
+  return async (req: NextRequest) => {
+    const key = req.headers.get('x-api-key')
+
+    if (key && key === process.env.YSWS_API_KEY) {
+      return handler(req)
+    }
+
+    const { user, error } = await needAuth(req)
+
+    if (error || !user) {
+      return NextResponse.json({ error: 'who tf are you?' }, { status: 401 })
+    }
+
+    if (!user.isActive) {
+      return NextResponse.json({ error: 'ur banned lol' }, { status: 403 })
+    }
+
+    if (!can(user.role, 'ysws_view')) {
+      return NextResponse.json({ error: 'nice try bozo' }, { status: 403 })
+    }
+
+    return handler(req)
+  }
+}

@@ -401,7 +401,7 @@ export function Review({ data, canEdit }: Props) {
                               ✓ Approve
                             </button>
                             <button
-                              onClick={() => upd(d.id, { status: 'rejected' })}
+                              onClick={() => upd(d.id, { status: 'rejected', approvedMins: 0 })}
                               className={`flex-1 px-3 py-2 rounded font-mono text-xs flex items-center justify-center gap-1 ${loc.status === 'rejected' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-gray-300 hover:bg-zinc-700'}`}
                             >
                               ✗ Reject
@@ -512,10 +512,10 @@ export function Review({ data, canEdit }: Props) {
             </button>
             <button
               onClick={() => submit('complete')}
-              className="bg-cyan-950/30 text-cyan-400 border-2 border-cyan-700/60 hover:bg-cyan-900/40 px-4 py-2 rounded-2xl font-mono text-sm transition-all"
+              className="bg-cyan-950/30 text-cyan-400 border-2 border-cyan-700/60 hover:bg-cyan-900/40 px-4 py-2 rounded-2xl font-mono text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={busy}
             >
-              {busy ? 'Saving...' : 'Complete Review'}
+              Complete Review
             </button>
           </div>
         </div>

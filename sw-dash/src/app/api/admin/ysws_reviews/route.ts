@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
-import { api } from '@/lib/api'
-import { PERMS } from '@/lib/perms'
+import { yswsApi } from '@/lib/api'
 import { getYsws } from '@/lib/ysws'
 
-export const GET = api(PERMS.ysws_view)(async ({ req }) => {
+export const GET = yswsApi(async (req) => {
   const params = req.nextUrl.searchParams
   const status = params.get('status') || 'pending'
   const sortBy = params.get('sortBy') || 'newest'
   const lbMode = params.get('lbMode') || 'weekly'
+  const hours = params.get('hours') ? parseInt(params.get('hours')!) : null
 
-  const data = await getYsws({ status, sortBy, lbMode })
+  const data = await getYsws({ status, sortBy, lbMode, hours })
   return NextResponse.json(data)
 })

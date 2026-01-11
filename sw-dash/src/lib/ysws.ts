@@ -44,6 +44,7 @@ interface Filters {
   status?: string | null
   sortBy?: string
   lbMode?: string
+  hours?: number | null
 }
 
 async function fetchYsws(filters: Filters = {}) {
@@ -53,8 +54,11 @@ async function fetchYsws(filters: Filters = {}) {
   today.setHours(0, 0, 0, 0)
   const now = new Date()
 
-  const where: { status?: string } = {}
+  const where: { status?: string; updatedAt?: { gte: Date } } = {}
   if (status && status !== 'all') where.status = status
+  if (filters.hours) {
+    where.updatedAt = { gte: new Date(Date.now() - filters.hours * 60 * 60 * 1000) }
+  }
 
   const orderBy = { createdAt: sortBy === 'oldest' ? 'asc' : 'desc' } as const
 
@@ -167,6 +171,7 @@ export async function getYsws(filters: Filters = {}) {
     status: filters.status || null,
     sortBy: filters.sortBy || 'newest',
     lbMode: filters.lbMode || 'weekly',
+    hours: filters.hours?.toString() || null,
   })
   return cache(key, 300, () => fetchYsws(filters))
 }
