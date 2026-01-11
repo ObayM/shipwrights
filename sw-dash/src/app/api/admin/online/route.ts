@@ -15,7 +15,7 @@ export const GET = api()(async () => {
     const ids = await redis.zrange('crew:online', 0, -1)
     if (ids.length === 0) return NextResponse.json({ crew: [] })
 
-    const keys = ids.map(id => `crew:${id}`)
+    const keys = ids.map((id) => `crew:${id}`)
     const values = await redis.mget(...keys)
 
     const crew = values.filter((v): v is Crew => v !== null && typeof v === 'object')

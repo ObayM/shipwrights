@@ -17,20 +17,29 @@ function checkSeen(userId: number): boolean {
   return false
 }
 
-async function trackOnline(user: { id: number; username: string; avatar: string | null; role: string }) {
+async function trackOnline(user: {
+  id: number
+  username: string
+  avatar: string | null
+  role: string
+}) {
   const redis = getRedis()
   if (!redis) return
-  
+
   try {
     const now = Date.now()
     await Promise.all([
       redis.zadd('crew:online', { score: now, member: String(user.id) }),
-      redis.setex(`crew:${user.id}`, 180, JSON.stringify({
-        id: user.id,
-        username: user.username,
-        avatar: user.avatar,
-        role: user.role,
-      }))
+      redis.setex(
+        `crew:${user.id}`,
+        180,
+        JSON.stringify({
+          id: user.id,
+          username: user.username,
+          avatar: user.avatar,
+          role: user.role,
+        })
+      ),
     ])
   } catch {}
 }

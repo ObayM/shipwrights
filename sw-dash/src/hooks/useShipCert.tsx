@@ -57,7 +57,7 @@ export function useShipCert(shipId: string) {
 
   const startReview = async () => {
     if (submitting) return
-    
+
     setSubmitting(true)
     try {
       const res = await fetch(`/api/admin/ship_certifications/${shipId}/claim`, { method: 'POST' })
@@ -123,7 +123,7 @@ export function useShipCert(shipId: string) {
 
   const update = async (newVerdict: string) => {
     if (submitting) return
-    
+
     try {
       if (!claimAllowsEdit && !canOverride) {
         setErr("it's already claimed!")
