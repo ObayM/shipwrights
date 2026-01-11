@@ -54,7 +54,7 @@ export function CertsView({ initial }: Props) {
   const params = useSearchParams()
   const [type, setType] = useState('all')
   const [status, setStatus] = useState('pending')
-  const [sortBy, setSortBy] = useState('newest')
+  const [sortBy, setSortBy] = useState('oldest')
   const [certs, setCerts] = useState(initial.certs)
   const [stats, setStats] = useState(initial.stats)
   const [leaderboard, setLeaderboard] = useState(initial.leaderboard)
