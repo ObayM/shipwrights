@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 
-import { Snow } from '@/components/snow'
 import './globals.css'
 
 const sans = Geist({
@@ -39,10 +38,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <link rel="apple-touch-icon" href="/logo_192_192.png" />
         <link rel="preload" href="/logo_nobg_notext.png" as="image" />
       </head>
-      <body className={`${sans.variable} ${mono.variable} antialiased`}>
-        <Snow />
-        {children}
-      </body>
+      <body className={`${sans.variable} ${mono.variable} antialiased`}>{children}</body>
     </html>
   )
 }

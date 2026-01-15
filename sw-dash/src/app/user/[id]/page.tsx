@@ -49,7 +49,6 @@ export default function Profile() {
   const [name, setName] = useState('')
   const [reg, setReg] = useState(false)
   const [updating, setUpdating] = useState(false)
-  const [snow, setSnow] = useState(true)
 
   const load = useCallback(async () => {
     try {
@@ -101,10 +100,6 @@ export default function Profile() {
 
   useEffect(() => {
     load()
-    try {
-      const saved = localStorage.getItem('snow')
-      if (saved !== null) setSnow(saved === 'true')
-    } catch {}
   }, [id, load])
 
   const add = async () => {
@@ -334,38 +329,6 @@ export default function Profile() {
                     className="relative inline-flex h-6 w-11 items-center rounded-full bg-amber-900/20 opacity-50 cursor-not-allowed"
                   >
                     <span className="inline-block h-4 w-4 transform rounded-full bg-amber-400/50 translate-x-1" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-amber-950/30">
-            <div className="space-y-3">
-              <div className="bg-zinc-900/30 border-2 border-amber-900/30 rounded-2xl p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-amber-200 font-medium text-sm">snowy dashy</div>
-                    <div className="text-amber-300/60 text-xs mt-1">make dashy snowy!! :3</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const next = !snow
-                      setSnow(next)
-                      try {
-                        localStorage.setItem('snow', String(next))
-                      } catch {}
-                      window.location.reload()
-                    }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      snow ? 'bg-amber-600' : 'bg-amber-900/20'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        snow ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
                   </button>
                 </div>
               </div>
