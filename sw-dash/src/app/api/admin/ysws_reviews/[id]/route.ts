@@ -67,7 +67,6 @@ export const PATCH = withParams(PERMS.ysws_edit)(async ({ user, req, params, ip,
         where: { id: review.shipCertId },
         data: {
           status: 'pending',
-          reviewerId: null,
           reviewCompletedAt: null,
           yswsReturnReason: returnReason,
           yswsReturnedBy: user.username,
