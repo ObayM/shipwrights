@@ -6,6 +6,7 @@ import { bust } from '@/lib/cache'
 import { getOne } from '@/lib/ysws'
 import { syslog } from '@/lib/syslog'
 import { parseId, idErr } from '@/lib/utils'
+import { syncFt } from '@/lib/flavortown-client'
 
 interface Decision {
   ftDevlogId: string
@@ -63,16 +64,22 @@ export const PATCH = withParams(PERMS.ysws_edit)(async ({ user, req, params, ip,
     })
 
     if (action === 'return') {
-      await prisma.shipCert.update({
+      const cert = await prisma.shipCert.update({
         where: { id: review.shipCertId },
         data: {
           status: 'pending',
+          syncedToFt: false,
           reviewCompletedAt: null,
           yswsReturnReason: returnReason,
           yswsReturnedBy: user.username,
           yswsReturnedAt: new Date(),
         },
       })
+
+      if (cert.ftProjectId) {
+        await syncFt(cert.ftProjectId, 'pending', '')
+        await prisma.shipCert.update({ where: { id: cert.id }, data: { syncedToFt: true } })
+      }
     }
 
     await syslog(
