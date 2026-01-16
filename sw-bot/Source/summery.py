@@ -28,7 +28,7 @@ def message_blocks():
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": f"Today a total of {reviews_done['yesterday']} reviews have been done that's {abs(relative_performance*100)}% {'more' if relative_performance >= 1 else 'less'} than yesterday! {'Great job team!!' if relative_performance >= 1 else ':(('} a total of {db.shipped_yesterday()} new ships have been sent that's {abs(relative_number_of_reviews)} {'less' if relative_number_of_reviews >= 0 else 'more'} than number of projects we reviewed {':(' if relative_number_of_reviews >= 0 else ':)'} today's biggest contributor is <@{top_reviewer['slack_id']}> with a total of {top_reviewer['count']} reviews :cat-heart:\n _ps remember to do your daily reviews if you haven't already :c3:_"
+				"text": f"Today a total of {reviews_done['yesterday']} reviews have been done that's {abs(relative_performance*100)}% {'more' if relative_performance >= 1 else 'less'} than yesterday! {'Great job team!!' if relative_performance >= 1 else ':(('} a total of {db.shipped_yesterday()} new ships have been sent that's {abs(relative_number_of_reviews)} {'less' if relative_number_of_reviews >= 0 else 'more'} than number of projects we reviewed {':)' if relative_number_of_reviews >= 0 else ':('} today's biggest contributor is <@{top_reviewer['slack_id']}> with a total of {top_reviewer['count']} reviews :cat-heart:\n _ps remember to do your daily reviews if you haven't already :c3:_"
 			}
 		},
 		{
