@@ -311,3 +311,76 @@ def insert_project_type(ft_project_id, project_type):
     finally:
         cursor.close()
         db.close()
+
+def recent_reviews():
+    db = get_db()
+    if not db:
+        return {"yesterday": 0, "day_before": 0}
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            SELECT 
+                SUM(CASE WHEN DATE(reviewCompletedAt) = DATE(NOW() - INTERVAL 1 DAY) THEN 1 ELSE 0 END) AS yesterday,
+                SUM(CASE WHEN DATE(reviewCompletedAt) = DATE(NOW() - INTERVAL 2 DAY) THEN 1 ELSE 0 END) AS day_before
+            FROM ship_certs
+            WHERE reviewCompletedAt IS NOT NULL
+        """)
+        row = cursor.fetchone()
+        return {
+            "yesterday": int(row[0] or 0),
+            "day_before": int(row[1] or 0)
+        }
+    except Exception as e:
+        print(f"Error fetching review counts: {e}")
+        return {"yesterday": 0, "day_before": 0}
+    finally:
+        cursor.close()
+        db.close()
+
+def shipped_yesterday():
+    db = get_db()
+    if not db:
+        return 0
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM ship_certs
+            WHERE DATE(createdAt) = DATE(NOW() - INTERVAL 1 DAY)
+        """)
+        row = cursor.fetchone()
+        return int(row[0] or 0)
+    except Exception as e:
+        print(f"Error fetching ships created yesterday: {e}")
+        return 0
+    finally:
+        cursor.close()
+        db.close()
+
+def top_reviewer_yesterday():
+    db = get_db()
+    if not db:
+        return {"slack_id": None, "count": 0}
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            SELECT u.slackId, COUNT(*) AS review_count
+            FROM ship_certs s
+            JOIN users u ON s.reviewerId = u.id
+            WHERE DATE(s.reviewCompletedAt) = DATE(NOW() - INTERVAL 1 DAY)
+              AND s.reviewCompletedAt IS NOT NULL
+              AND s.reviewerId IS NOT NULL
+            GROUP BY s.reviewerId
+            ORDER BY review_count DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+        if row:
+            return {"slack_id": row[0], "count": int(row[1])}
+        return {"slack_id": None, "count": 0}
+    except Exception as e:
+        print(f"Error fetching top reviewer: {e}")
+        return {"slack_id": None, "count": 0}
+    finally:
+        cursor.close()
+        db.close()

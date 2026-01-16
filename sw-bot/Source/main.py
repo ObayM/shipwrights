@@ -1,4 +1,4 @@
-import os, threading, json
+import os, threading, json, summery, threading
 import db, helpers, api, home, relay
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
@@ -8,6 +8,7 @@ API_KEY = os.getenv("API_KEY")
 USER_CHANNEL = os.getenv("USER_CHANNEL_ID")
 STAFF_CHANNEL = os.getenv("STAFF_CHANNEL_ID")
 BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
 
 slack_app = App(token=BOT_TOKEN, signing_secret=os.getenv("SLACK_SIGNING_SECRET"), process_before_response=True)
 EMOJI_MAP = {}
@@ -131,9 +132,9 @@ def run_bot():
 
 if __name__ == "__main__":
     print("starting services...")
-    
+    reminder_thread = threading.Thread(target=summery.reminders_loop, daemon=True)
+    reminder_thread.start()
     cache_emojis()
-
     port = int(os.getenv('PORT', 45100))
     server_thread = threading.Thread(target=api.run_server, daemon=True)
     server_thread.start()
