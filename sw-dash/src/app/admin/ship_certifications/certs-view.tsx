@@ -323,6 +323,7 @@ export function CertsView({ initial }: Props) {
           onResults={handleSearch}
           onLoading={setLoading}
           resultCount={searchMode ? certs.length : null}
+          init={params.get('search') || ''}
         />
       </div>
 
