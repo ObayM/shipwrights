@@ -37,7 +37,7 @@ def seen_already(event_id):
 
 
 @slack_app.event("message")
-def msg(event, client):
+def msg(event, client, respond):
     if seen_already(event.get("client_msg_id") or event.get("event_ts")):
         return
     subtype = event.get("subtype")
@@ -54,7 +54,7 @@ def msg(event, client):
                 return
             
             ticket = db.find_ticket(event["thread_ts"])
-            if ticket:
+            if ticket and ticket.get("status", None) != "closed":
                 user_info = client.users_info(user=user_id)
                 user_name = user_info["user"]["profile"].get("display_name") or user_info["user"]["profile"].get("real_name")
                 user_avatar = user_info["user"]["profile"]["image_48"]
@@ -88,6 +88,14 @@ def msg(event, client):
                     requests.post(f'http://localhost:{port}/ws/notify', json={'ticketId': ticket["id"]}, timeout=0.5)
                 except:
                     pass
+            elif ticket.get("status", None) == "closed" and USER_CHANNEL == event.get("channel"):
+                client.chat_postEphemeral(
+                    channel=USER_CHANNEL,
+                    thread_ts=ticket["userThreadTs"],
+                    user=user_id,
+                    text="Hey there! Looks like this ticket was resolved. Shipwrights did not receive your response."
+
+                )
         else:
             user_id = event["user"]
             text = event.get("text", "")
@@ -233,7 +241,7 @@ def resolve_ticket(ack, body, client, respond):
         client.chat_postMessage(
             channel=USER_CHANNEL,
             thread_ts=ticket["userThreadTs"],
-            text=f"Hey! Would you look at that, This ticket was marked as resolved!",
+            text=f"Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket.",
         )
         client.reactions_add(
             channel=STAFF_CHANNEL,
