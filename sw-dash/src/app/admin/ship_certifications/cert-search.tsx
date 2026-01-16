@@ -1,16 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Cert } from '@/types'
 
 interface Props {
   onResults: (certs: Cert[] | null) => void
   onLoading: (loading: boolean) => void
   resultCount?: number | null
+  init?: string
 }
 
-export function CertSearch({ onResults, onLoading, resultCount }: Props) {
-  const [q, setQ] = useState('')
+export function CertSearch({ onResults, onLoading, resultCount, init }: Props) {
+  const [q, setQ] = useState(init || '')
+
+  useEffect(() => {
+    if (init) search(init)
+  }, [])
 
   const search = async (val: string) => {
     const v = val.trim()
