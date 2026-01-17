@@ -2,10 +2,10 @@ import json, os, requests, tempfile, time
 import db
 
 MACROS = {
-    "fraud": "Hey there! The shipwrights team cannot help you with this query. Please forward any related questions to <@U091HC53CE8>.",
-    "fthelp": "Hey there! The shipwrights team cannot help you with this query. Please forward related questions to <#C09MATKQM8C>.",
-    "faq": "Hey there! Please have a look at our FAQ <https://us.review.hackclub.com/faq | here>",
-    "queue": "Hey there! we currently have a backlog of projects waiting to be certified. Please be patient.\n\n*You can keep track of the queue <https://us.review.hackclub.com/queue | here>!*",
+    "fraud": "Hey there!\nThe shipwrights team cannot help you with this query. Please forward any related questions to <@U091HC53CE8>.",
+    "fthelp": "Hey there!\nThe shipwrights team cannot help you with this query. Please forward related questions to <#C09MATKQM8C>.",
+    "faq": "Hey there!\nPlease have a look at our FAQ <https://us.review.hackclub.com/faq | here>",
+    "queue": "Hey there!\nwe currently have a backlog of projects waiting to be certified. Please be patient.\n\n*You can keep track of the queue <https://us.review.hackclub.com/queue | here>!*",
 }
 
 
