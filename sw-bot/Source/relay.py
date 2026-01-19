@@ -181,6 +181,7 @@ def handle_staff_reply(event, client, bot_token, staff_channel, user_channel):
                 text="Hey there! Looks like this ticket was resolved. The user did not receive your response."
             )
             return
+
         clean_text = text[1:].strip().lower()
         if clean_text in MACROS:
             resp = client.chat_postMessage(
@@ -225,28 +226,27 @@ def handle_staff_reply(event, client, bot_token, staff_channel, user_channel):
                     }
                 ]
             )
-            if ticket["status"] == "open":
-                db.close_ticket(ticket["id"])
-                client.chat_postMessage(
-                    channel=staff_channel,
-                    thread_ts=ticket["staffThreadTs"],
-                    text=f"Hey! Would you look at that, This ticket was marked as resolved by <@{user_id}>!",
-                )
-                client.chat_postMessage(
-                    channel=user_channel,
-                    thread_ts=ticket["userThreadTs"],
-                    text=f"Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket.",
-                )
-                client.reactions_add(
-                    channel=staff_channel,
-                    timestamp=ticket["staffThreadTs"],
-                    name="checks-passed-octicon"
-                )
-                client.reactions_add(
-                    channel=staff_channel,
-                    timestamp=ticket["userThreadTs"],
-                    name="checks-passed-octicon"
-                )
+            db.close_ticket(ticket["id"])
+            client.chat_postMessage(
+                channel=staff_channel,
+                thread_ts=ticket["staffThreadTs"],
+                text=f"Hey! Would you look at that, This ticket was marked as resolved by <@{user_id}>!",
+            )
+            client.chat_postMessage(
+                channel=user_channel,
+                thread_ts=ticket["userThreadTs"],
+                text=f"Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket.",
+            )
+            client.reactions_add(
+                channel=staff_channel,
+                timestamp=ticket["staffThreadTs"],
+                name="checks-passed-octicon"
+            )
+            client.reactions_add(
+                channel=user_channel,
+                timestamp=ticket["userThreadTs"],
+                name="checks-passed-octicon"
+            )
     elif text.strip() == ".resolve":
         if not db.can_close(user_id):
             client.chat_postEphemeral(
