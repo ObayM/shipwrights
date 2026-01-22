@@ -54,13 +54,13 @@ def ticket_summery():
     if "choices" not in result:
         return jsonify({"error": "Unexpected API response", "response": result}), 500
 
-    ai_response = result["choices"][0]["message"]["content"]
-    return jsonify({"summary": json.loads(ai_response)}), 200
+    ai_response = json.loads(result["choices"][0]["message"]["content"])
+    return jsonify({"suggested_action": ai_response['action'], "status": ai_response['status'], "summary": ai_response['summary']}), 200
 
 
 if __name__ == "__main__":
     try:
-        app.run(host='0.0.0.0', port=PORT, debug=False, use_reloader=False)
         print("Services up and running!")
+        app.run(host='0.0.0.0', port=PORT, debug=False, use_reloader=False)
     except Exception as e:
         print(f"Error occurred whilst attempting to run SWAI: {e}")
