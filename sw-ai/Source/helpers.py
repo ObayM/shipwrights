@@ -1,41 +1,74 @@
-def format(messages):
+def format_messages(ticket_messages):
     conversation=""
-    for message in messages:
+    for message in ticket_messages:
         if message.get("isStaff", False) == True:
             conversation += f"Shipwrights team: {message.get('msg', 'None')}"
         else:
             conversation += f"User: {message.get('msg', 'None')}"
     return conversation
 
-def format_prompt(messages, question):
+def format_summary_prompt(ticket_messages, ticket_question):
     return f"""You are an AI assistant for Shipwrights reviewing Hack Club project submissions.
 
-## Guidelines (Brief)
-- README required: explains purpose, usage, how to run
-- Must be open-source with visible code
-- Needs working demo (live site, video, or downloadable release)
-- Hardware projects: video/photos required
-- Games: must be playable or have gameplay video
+## Review Guidelines
+- **README**: Must explain purpose, usage, and how to run
+- **Open-source**: All code must be publicly visible
+- **Demo required**: Live site, video, or downloadable release
+- **Hardware**: Video/photos of physical build required
+- **Games**: Must be playable or have gameplay video
 
-## Task
-Summarize this ticket briefly.
+## Your Task
+Analyze the support ticket below and provide a concise summary.
 
-## Rules
-- You MUST always return a valid JSON response, no exceptions.
-- If status is "resolved", set "action" to "" (empty string).
-- Never refuse to respond or return an error.
+## Ticket Details
+**Original Question:** {ticket_question}
 
-## Conversation
-**Question:** {question}
+**Conversation:**
+{format_messages(ticket_messages)}
 
-{format(messages)}
+## Instructions
+1. Summarize the ticket's core issue in 1-2 sentences
+2. Determine the current status
+3. Identify the next action needed (leave empty if resolved)
 
-## Response (JSON only)
-{{
-    "summary": "1-2 sentences max",
-    "status": "resolved | pending_user | pending_staff | unclear",
-    "action": "Next step (1 sentence) or empty string if resolved"
-}}"""
+## Response Format
+Return ONLY valid JSON with no markdown, no code blocks, no explanation:
+{{"summary": "Brief description of the issue", "status": "resolved|pending_user|pending_staff|unclear", "action": "Next step or the word None if resolved"}}"""
+
+
+def format_completion_prompt(ticket_messages, ticket_question, message):
+    return f"""You are a writing assistant for the Shipwrights team at Hack Club.
+
+## Your Task
+Paraphrase the provided message to be clearer, more grammatical, and professional while maintaining the original intent.
+
+## Context
+**Ticket Question:** {ticket_question}
+
+**Conversation History:**
+{format_messages(ticket_messages)}
+
+## Review Guidelines Reference
+- Web Apps: Need live demo (GitHub Pages, Vercel, Netlify)
+- Executables: GitHub releases as .exe/.app/.deb with instructions
+- Android: .apk in releases or Play Store
+- APIs: Swagger docs with testable endpoints
+- Games: Web build on itch.io or GitHub releases
+- Bots: Must be hosted and online with command documentation
+- Extensions: On store or unpacked in GitHub releases
+- Hardware: Demo video required for physical builds; KiCad/EDA files for PCB-only
+- README: Must explain purpose, usage, and setup instructions
+
+## Message to Paraphrase
+{message}
+
+## Instructions
+Rewrite the message in 2-3 clear, professional sentences.
+
+## Response Format
+Return ONLY valid JSON with no markdown, no code blocks, no explanation:
+{{"paraphrased": "Your rewritten message here"}}"""
+
 
 def clean_json_response(content: str) -> str:
     content = content.strip()

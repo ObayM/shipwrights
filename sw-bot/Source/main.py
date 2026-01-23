@@ -1,5 +1,5 @@
 import os, threading, json, summery, threading
-import db, helpers, api, home, relay
+import db, helpers, api, home, relay, ai
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from summery import send_reminder
@@ -111,13 +111,16 @@ def resolve_ticket(ack, body, client):
             timestamp=ticket["userThreadTs"],
             name="checks-passed-octicon"
         )
+        ai.summarize_ticket(ticket_id)
     else:
         helpers.show_unauthorized_close(client, body)
 
 @slack_app.command("/swsummery")
-def trigger_summery(command):
+def trigger_summery(command, ack):
+    ack()
     if command.get("user_id") == "U092F9A8VMY":
         send_reminder()
+
 @slack_app.view("edited_message")
 def edited_message(ack, client, view):
     ack()
