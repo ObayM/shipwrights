@@ -3,41 +3,41 @@ generator client {
 }
 
 datasource db {
-  provider  = "mysql"
-  url       = env("DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id               Int                   @id @default(autoincrement())
-  slackId          String                @unique
+  id               Int           @id @default(autoincrement())
+  slackId          String        @unique
   username         String
   avatar           String?
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  isActive         Boolean               @default(true)
-  role             String                @default("observer")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  isActive         Boolean       @default(true)
+  role             String        @default("observer")
   sessionExpires   DateTime?
   sessionToken     String?
   currentChallenge String?
-  staffNotes       String?               @db.Text
+  staffNotes       String?       @db.Text
   skills           Json?
   lastSeen         DateTime?
   auditLogs        AuditLog[]
   subscriptions    AssignSubsc[]
-  assignedReviews  Assignment[]          @relation("AssignedTo")
-  createdReviews   Assignment[]          @relation("CreatedBy")
+  assignedReviews  Assignment[]  @relation("AssignedTo")
+  createdReviews   Assignment[]  @relation("CreatedBy")
   yubikeys         Yubikey[]
-  shipCerts          ShipCert[]
-  claimedShipCerts   ShipCert[]          @relation("ClaimedBy")
-  sessions           Session[]
-  pushSubs           PushSub[]
-  ticketNotes        TicketNote[]
+  shipCerts        ShipCert[]
+  claimedShipCerts ShipCert[]    @relation("ClaimedBy")
+  sessions         Session[]
+  pushSubs         PushSub[]
+  ticketNotes      TicketNote[]
 
-  cookieBalance      Float                 @default(0)
-  cookiesEarned      Float                 @default(0)
-  payoutReqs         PayoutReq[]           @relation("PayoutReqs")
-  payoutApprovals    PayoutReq[]           @relation("PayoutApprovals")
-  yswsReviews        YswsReview[]          @relation("YswsReviewer")
+  cookieBalance   Float        @default(0)
+  cookiesEarned   Float        @default(0)
+  payoutReqs      PayoutReq[]  @relation("PayoutReqs")
+  payoutApprovals PayoutReq[]  @relation("PayoutApprovals")
+  yswsReviews     YswsReview[] @relation("YswsReviewer")
 
   @@map("users")
 }
@@ -56,9 +56,9 @@ model PayoutReq {
   proofUrl    String?
   createdAt   DateTime  @default(now())
   approvedAt  DateTime?
-  
-  user        User      @relation("PayoutReqs", fields: [userId], references: [id])
-  admin       User?     @relation("PayoutApprovals", fields: [adminId], references: [id])
+
+  user  User  @relation("PayoutReqs", fields: [userId], references: [id])
+  admin User? @relation("PayoutApprovals", fields: [adminId], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -144,42 +144,42 @@ model AssignSubsc {
 }
 
 model ShipCert {
-  id                  Int       @id @default(autoincrement())
-  ftProjectId         String?
-  ftSlackId           String?
-  ftUsername          String?
-  
-  projectName         String?
-  projectType         String?
-  description         String?   @db.Text
-  demoUrl             String?
-  repoUrl             String?
-  readmeUrl           String?
-  devTime             String?
-  
-  status              String    @default("pending")
-  reviewerId          Int?
-  claimerId           Int?
-  internalNotes       String?   @db.Text
-  reviewFeedback      String?   @db.Text
-  proofVideoUrl       String?
-  reviewStartedAt     DateTime?
-  reviewCompletedAt   DateTime?
-  syncedToFt          Boolean   @default(false)
-  cookiesEarned       Float?
-  payoutMulti         Float?
-  customBounty        Float?
-  
-  yswsReturnReason    String?   @db.Text
-  yswsReturnedBy      String?
-  yswsReturnedAt      DateTime?
-  
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  reviewer            User?     @relation(fields: [reviewerId], references: [id])
-  claimer             User?     @relation("ClaimedBy", fields: [claimerId], references: [id])
-  assignments         Assignment[]
-  yswsReviews         YswsReview[]
+  id          Int     @id @default(autoincrement())
+  ftProjectId String?
+  ftSlackId   String?
+  ftUsername  String?
+
+  projectName String?
+  projectType String?
+  description String? @db.Text
+  demoUrl     String?
+  repoUrl     String?
+  readmeUrl   String?
+  devTime     String?
+
+  status            String    @default("pending")
+  reviewerId        Int?
+  claimerId         Int?
+  internalNotes     String?   @db.Text
+  reviewFeedback    String?   @db.Text
+  proofVideoUrl     String?
+  reviewStartedAt   DateTime?
+  reviewCompletedAt DateTime?
+  syncedToFt        Boolean   @default(false)
+  cookiesEarned     Float?
+  payoutMulti       Float?
+  customBounty      Float?
+
+  yswsReturnReason String?   @db.Text
+  yswsReturnedBy   String?
+  yswsReturnedAt   DateTime?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  reviewer    User?        @relation(fields: [reviewerId], references: [id])
+  claimer     User?        @relation("ClaimedBy", fields: [claimerId], references: [id])
+  assignments Assignment[]
+  yswsReviews YswsReview[]
 
   @@index([reviewerId])
   @@index([status])
@@ -189,26 +189,25 @@ model ShipCert {
 }
 
 model YswsReview {
-  id            Int       @id @default(autoincrement())
-  shipCertId    Int
-  status        String    @default("pending")
-  reviewerId    Int?
-  returnReason  String?   @db.Text
-  devlogs       Json?
-  commits       Json?
-  decisions     Json?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  shipCert      ShipCert  @relation(fields: [shipCertId], references: [id])
-  reviewer      User?     @relation("YswsReviewer", fields: [reviewerId], references: [id])
+  id           Int      @id @default(autoincrement())
+  shipCertId   Int
+  status       String   @default("pending")
+  reviewerId   Int?
+  returnReason String?  @db.Text
+  devlogs      Json?
+  commits      Json?
+  decisions    Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shipCert ShipCert @relation(fields: [shipCertId], references: [id])
+  reviewer User?    @relation("YswsReviewer", fields: [reviewerId], references: [id])
 
   @@index([shipCertId])
   @@index([status])
   @@index([reviewerId])
   @@map("ysws_reviews")
 }
-
 
 model Yubikey {
   id           String    @id @default(cuid())
@@ -249,6 +248,7 @@ model Ticket {
   status        Ticket_status? @default(open)
   createdAt     DateTime?      @default(now()) @db.Timestamp(0)
   closedAt      DateTime?      @db.Timestamp(0)
+  closedBy      String?        @db.VarChar(50)
   userAvatar    String?        @db.VarChar(500)
   assignees     String?        @db.Text
   messages      TicketMsg[]
@@ -256,21 +256,22 @@ model Ticket {
 
   @@index([staffThreadTs])
   @@index([userThreadTs])
+  @@index([closedBy])
   @@map("tickets")
 }
 
 model TicketMsg {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   ticketId     Int
-  senderId     String   @db.VarChar(50)
-  senderName   String   @db.VarChar(255)
-  msg          String   @db.Text
-  files        String?  @db.LongText
-  isStaff      Boolean? @default(false)
+  senderId     String    @db.VarChar(50)
+  senderName   String    @db.VarChar(255)
+  msg          String    @db.Text
+  files        String?   @db.LongText
+  isStaff      Boolean?  @default(false)
   createdAt    DateTime? @default(now()) @db.Timestamp(0)
-  senderAvatar String?  @db.VarChar(500)
-  messageTs    String?  @db.VarChar(50)
-  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  senderAvatar String?   @db.VarChar(500)
+  messageTs    String?   @db.VarChar(50)
+  ticket       Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade, onUpdate: Restrict)
 
   @@index([ticketId])
   @@map("ticket_msgs")
@@ -321,5 +322,3 @@ model SysLog {
   @@index([targetType])
   @@map("sys_logs")
 }
-
-
