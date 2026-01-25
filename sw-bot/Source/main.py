@@ -120,7 +120,7 @@ def resolve_ticket(ack, body, client):
     ticket = db.get_ticket(ticket_id)
     user_id = body["user"]["id"]
     if (user_id in db.get_shipwrights() or user_id == ticket["userId"]) and ticket["status"] == "open":
-        db.close_ticket(ticket_id)
+        db.close_ticket(ticket_id, user_id)
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],

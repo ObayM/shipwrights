@@ -226,7 +226,7 @@ def handle_staff_reply(event, client, bot_token, staff_channel, user_channel):
                     }
                 ]
             )
-            db.close_ticket(ticket["id"])
+            db.close_ticket(ticket["id"], user_id)
             client.chat_postMessage(
                 channel=staff_channel,
                 thread_ts=ticket["staffThreadTs"],
@@ -266,7 +266,7 @@ def handle_staff_reply(event, client, bot_token, staff_channel, user_channel):
             )
             return
 
-        if db.close_ticket(ticket["id"]):
+        if db.close_ticket(ticket["id"], user_id):
 
             try:
                 client.reactions_add(

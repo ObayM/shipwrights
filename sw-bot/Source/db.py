@@ -122,7 +122,7 @@ def find_ticket(staff_thread):
         cursor.close()
         db.close()
 
-def close_ticket(ticket_id):
+def close_ticket(ticket_id, closer):
     db = get_db()
     if not db:
         return False
@@ -130,13 +130,13 @@ def close_ticket(ticket_id):
     cursor = db.cursor()
     try:
         cursor.execute(
-            "UPDATE tickets SET status = 'closed' WHERE id = %s",
-            (ticket_id,)
+            "UPDATE tickets SET status = 'closed', closedAt = NOW(), closedBy = %s WHERE id = %s",
+            (closer, ticket_id,)
         )
         db.commit()
         return True
     except Exception as e:
-        print(f"couldnt close ticket: {e}")
+        print(f"couldn't close ticket: {e}")
         return False
     finally:
         cursor.close()

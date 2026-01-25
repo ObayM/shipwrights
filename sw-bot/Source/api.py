@@ -4,7 +4,6 @@ from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, emit, join_room
 from flask_cors import CORS
 from slack_sdk import WebClient
-from db import insert_project_type
 from dotenv import load_dotenv
 load_dotenv()
 
