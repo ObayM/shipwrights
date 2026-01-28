@@ -155,7 +155,7 @@ def note_added():
     ship_id = data.get('shipId')
 
     if ship_id:
-        socketio.emit('note_added', {'shipId': ship_id})
+        socketio.emit('note_added', {'shipId': ship_id}, room=f'ship_{ship_id}')
 
     return jsonify({'ok': True})
 
