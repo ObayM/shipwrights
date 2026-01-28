@@ -24,10 +24,10 @@ export async function fetchDevlogs(ftProjectId: string): Promise<FtDevlog[]> {
     return []
   }
 
-  const url = `${baseUrl}/api/v1/projects/${ftProjectId}/devlogs`
+  const projectUrl = `${baseUrl}/api/v1/projects/${ftProjectId}`
 
   try {
-    const res = await fetch(url, {
+    const projectRes = await fetch(projectUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -35,23 +35,53 @@ export async function fetchDevlogs(ftProjectId: string): Promise<FtDevlog[]> {
       },
     })
 
-    if (!res.ok) {
-      const txt = await res.text()
-      console.error(`ft devlog fetch borked: ${res.status} ${txt}`)
+    if (!projectRes.ok) {
+      const txt = await projectRes.text()
+      console.error(`ft project fetch borked: ${projectRes.status} ${txt}`)
       await syslog(
-        'ft_devlog_fetch_fail',
-        res.status,
+        'ft_project_fetch_fail',
+        projectRes.status,
         null,
-        `couldnt fetch devlogs for ${ftProjectId}`,
+        `couldnt fetch project ${ftProjectId}`,
         undefined,
-        { metadata: { ftProjectId, url, error: txt }, severity: 'error' }
+        { metadata: { ftProjectId, url: projectUrl, error: txt }, severity: 'error' }
       )
       return []
     }
 
-    const data = await res.json()
+    const project = await projectRes.json()
+    const devlogIds = project.devlog_ids || []
 
-    return data.devlogs || data || []
+    if (!devlogIds.length) {
+      return []
+    }
+
+    const devlogs = await Promise.all(
+      devlogIds.map(async (id: number) => {
+        const devlogUrl = `${baseUrl}/api/v1/devlogs/${id}`
+        try {
+          const devlogRes = await fetch(devlogUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+          })
+
+          if (!devlogRes.ok) {
+            console.error(`ft devlog ${id} fetch borked: ${devlogRes.status}`)
+            return null
+          }
+
+          return await devlogRes.json()
+        } catch (e) {
+          console.error(`ft devlog ${id} fetch exploded:`, e)
+          return null
+        }
+      })
+    )
+
+    return devlogs.filter((d): d is FtDevlog => d !== null)
   } catch (e) {
     console.error('ft devlog fetch exploded:', e)
     await syslog(
