@@ -161,7 +161,7 @@ def resolve_ticket(ack, body, client):
     ticket_id = json.loads(body["actions"][0]["value"])
     ticket = db.get_ticket(ticket_id)
     user_id = body["user"]["id"]
-    if (user_id in db.get_shipwrights() or user_id == ticket["userId"]) and ticket["status"] == "open":
+    if ((helpers.is_shipwright(user_id) and user_id != ticket["userId"]) or (user_id == ticket["userId"]) and not helpers.is_shipwright(user_id)) and ticket["status"] == "open":
         db.close_ticket(ticket_id, user_id)
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
@@ -184,6 +184,13 @@ def resolve_ticket(ack, body, client):
             name="checks-passed-octicon"
         )
         ai.summarize_ticket(ticket_id)
+    elif helpers.is_shipwright(user_id) and user_id == ticket["userId"]:
+        client.chat_postEphemeral(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            user=user_id,
+            text="You cannot close your own ticket as a shipwright."
+        )
     else:
         helpers.show_unauthorized_close(client, body)
 

@@ -1,4 +1,4 @@
-import views
+import views, db
 from collections import defaultdict
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -46,4 +46,8 @@ def get_user_info(client, user_id):
         return {"username": username, "pfp": pfp}
     return None
 
+def is_shipwright(user_id):
+    if user_id in db.get_shipwrights():
+        return True
+    return False
 
