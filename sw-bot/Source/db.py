@@ -122,7 +122,46 @@ def find_ticket(staff_thread):
         cursor.close()
         db.close()
 
-def close_ticket(ticket_id, closer):
+def claim_ticket(ticket_id, closer):
+    db = get_db()
+    if not db:
+        return False
+
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "UPDATE tickets SET closedBy = %s WHERE id = %s",
+            (closer ,ticket_id,)
+        )
+        db.commit()
+        return True
+    except Exception as e:
+        print(f"couldn't close ticket: {e}")
+        return False
+    finally:
+        cursor.close()
+        db.close()
+
+def is_claimed(ticket_id):
+    db = get_db()
+    if not db:
+        return False
+
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT closedBy FROM tickets WHERE id = %s", (ticket_id,))
+        ticket = cursor.fetchone()
+        if not ticket:
+            return False
+        return ticket.get("closedBy") is not None
+    except Exception as e:
+        print(f"couldn't check if ticket is claimed: {e}")
+        return False
+    finally:
+        cursor.close()
+        db.close()
+
+def close_ticket(ticket_id):
     db = get_db()
     if not db:
         return False
@@ -130,8 +169,8 @@ def close_ticket(ticket_id, closer):
     cursor = db.cursor()
     try:
         cursor.execute(
-            "UPDATE tickets SET status = 'closed', closedAt = NOW(), closedBy = %s WHERE id = %s",
-            (closer, ticket_id,)
+            "UPDATE tickets SET status = 'closed', closedAt = NOW() WHERE id = %s",
+            (ticket_id,)
         )
         db.commit()
         return True

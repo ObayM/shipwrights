@@ -161,8 +161,9 @@ def resolve_ticket(ack, body, client):
     ticket_id = json.loads(body["actions"][0]["value"])
     ticket = db.get_ticket(ticket_id)
     user_id = body["user"]["id"]
-    if ((helpers.is_shipwright(user_id) and user_id != ticket["userId"]) or (user_id == ticket["userId"]) and not helpers.is_shipwright(user_id)) and ticket["status"] == "open":
-        db.close_ticket(ticket_id, user_id)
+    if (helpers.is_shipwright(user_id) and user_id != ticket["userId"]) and ticket["status"] == "open":
+        db.close_ticket(ticket_id)
+        db.claim_ticket(ticket_id, user_id)
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
@@ -184,6 +185,49 @@ def resolve_ticket(ack, body, client):
             name="checks-passed-octicon"
         )
         ai.summarize_ticket(ticket_id)
+
+    elif (user_id == ticket["userId"] and not helpers.is_shipwright(user_id)) and ticket["status"] == "open":
+        db.close_ticket(ticket_id)
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text=f"Hey! Would you look at that, This ticket was marked as resolved by <@{user_id}>!",
+        )
+        client.chat_postMessage(
+            channel=USER_CHANNEL,
+            thread_ts=ticket["userThreadTs"],
+            text=f"Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket.",
+        )
+        client.reactions_add(
+            channel=STAFF_CHANNEL,
+            timestamp=ticket["staffThreadTs"],
+            name="checks-passed-octicon"
+        )
+        client.reactions_add(
+            channel=USER_CHANNEL,
+            timestamp=ticket["userThreadTs"],
+            name="checks-passed-octicon"
+        )
+        ai.summarize_ticket(ticket_id)
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text="",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "Hey! So it looks the user closed this ticket. Please claim this ticket if you handled the ticket."},
+                    "accessory": {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "Claim Ticket"},
+                        "style": "primary",
+                        "value": str(ticket_id),
+                        "action_id": "claim_ticket"
+                    }
+                },
+            ]
+        )
+
     elif helpers.is_shipwright(user_id) and user_id == ticket["userId"]:
         client.chat_postEphemeral(
             channel=STAFF_CHANNEL,
@@ -193,6 +237,27 @@ def resolve_ticket(ack, body, client):
         )
     else:
         helpers.show_unauthorized_close(client, body)
+
+@slack_app.action("claim_ticket")
+def claim_ticket(body, client, ack):
+    ack()
+    ticket_id = json.loads(body["actions"][0]["value"])
+    ticket = db.get_ticket(ticket_id)
+    user_id = body["user"]["id"]
+    if db.is_claimed(ticket_id):
+        client.chat_postEphemeral(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            user=user_id,
+            text=f"*This ticket is already claimed by <@{ticket['closedBy']}>!*"
+        )
+    else:
+        db.claim_ticket(ticket_id, user_id)
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text=f"*This ticket has been claimed by <@{user_id}>!*"
+        )
 
 @slack_app.command("/swsummery")
 def trigger_summery(command, ack):
