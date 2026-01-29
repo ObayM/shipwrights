@@ -207,7 +207,7 @@ Repo URL: {repo_url}
 {readme_content}
 
 You need to be helpufl and provide as much "unnoticable info" or hard ones, don't try to give a reject or accept, just your thoughts
-But try to lean towards a one, like if it's really obvious just say it and try to be really concise but detailed for hard/wierd projects
+But try to lean towards a one, like if it's really obvious just say it and try to be really concise but detailed for hard/weird projects
 
 ## Response Format
 Return ONLY valid JSON with no markdown, no code blocks and try to be concise:
