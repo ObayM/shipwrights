@@ -72,16 +72,16 @@ interface LocalDevlog {
 
 const RETURN_REASONS = [
   'Functionality not clearly demonstrated',
-  'Unclear or confusing project demonstration',
-  'Technical issues in the certification video',
-  'Insufficient proof that project works',
-  'Demo Link not working during review',
-  'Project not fully working',
+  'Unclear or confusing cert video',
+  'Technical issues in cert video',
+  'Insufficient proof in cert video that project works',
+  'Demo Link not working during YSWS review',
   'GitHub repository not accessible',
   'No demo video provided',
   'No AI use declaration',
+  'Insufficient README',
+  'Project started before Flavortown, but not labelled as an updated project.',
   'Other certification-related issues',
-  'Insufficient README documentation',
 ]
 
 export function Review({ data, canEdit }: Props) {
@@ -262,7 +262,8 @@ export function Review({ data, canEdit }: Props) {
                   href={data.shipCert.repoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onAuxClick={(e) => e.button === 1 && setRepoOpened(true)}
+                  onClick={() => setRepoOpened(true)}
+                  onAuxClick={() => setRepoOpened(true)}
                   className="bg-amber-900/50 text-amber-300 px-3 py-1.5 rounded font-mono text-xs hover:bg-amber-800/50 transition-colors"
                 >
                   Repo
@@ -273,7 +274,8 @@ export function Review({ data, canEdit }: Props) {
                   href={data.shipCert.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onAuxClick={(e) => e.button === 1 && setDemoOpened(true)}
+                  onClick={() => setDemoOpened(true)}
+                  onAuxClick={() => setDemoOpened(true)}
                   className="bg-amber-900/50 text-amber-300 px-3 py-1.5 rounded font-mono text-xs hover:bg-amber-800/50 transition-colors"
                 >
                   Demo
@@ -326,11 +328,11 @@ export function Review({ data, canEdit }: Props) {
               low quality to the point it doesn't do what it says it does (shipwrights messed up -
               return to them)
             </li>
-            <li>Looks like ai, but undeclared</li>
-            <li>Looks like over 30% ai</li>
+            <li>Looks like ai, but is undeclared (check declaration on the ft project page) </li>
+            <li>Looks like over 30% ai - even if it is declared</li>
             <li>Looks like it isn't shipped (shipwrights messed up)</li>
             <li>last project edit was before the event launch</li>
-            <li>project was previously put into the ysws db</li>
+            <li>project was worked on before event, and not marked as Project Update: in description (return to shipwrights)</li>
           </ul>
         </div>
       </div>
@@ -553,7 +555,7 @@ export function Review({ data, canEdit }: Props) {
                       href={data.shipCert.demoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onAuxClick={() => setDemoOpened(true)}
+                      onClick={() => setDemoOpened(true)}
                       className="text-red-300 hover:text-red-200 underline"
                     >
                       Check the Demo link (cuz u didn't..)
@@ -567,7 +569,7 @@ export function Review({ data, canEdit }: Props) {
                       href={data.shipCert.repoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onAuxClick={() => setRepoOpened(true)}
+                      onClick={() => setRepoOpened(true)}
                       className="text-red-300 hover:text-red-200 underline"
                     >
                       Check the Repo link (cuz u didn't..)
