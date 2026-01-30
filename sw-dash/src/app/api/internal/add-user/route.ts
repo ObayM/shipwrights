@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
       alreadyExisted: false,
     })
   } catch (e) {
-    console.error(e)
     return NextResponse.json({ error: e instanceof Error ? e.message : 'shit broke' }, { status: 500 })
   }
 }

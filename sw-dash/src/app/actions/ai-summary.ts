@@ -16,13 +16,9 @@ export async function generateProjectSummary(
     try {
         let readmeContent = ''
         if (projectDetails.readmeUrl) {
-            try {
-                const readmeRes = await fetch(projectDetails.readmeUrl)
-                if (readmeRes.ok) {
-                    readmeContent = await readmeRes.text()
-                }
-            } catch (e) {
-                console.error('Failed to fetch README:', e)
+            const readmeRes = await fetch(projectDetails.readmeUrl).catch(() => null)
+            if (readmeRes?.ok) {
+                readmeContent = await readmeRes.text()
             }
         }
 
@@ -54,7 +50,6 @@ export async function generateProjectSummary(
         revalidatePath(`/admin/ship_certifications/${shipCertId}/edit`)
         return { success: true, summary }
     } catch (error) {
-        console.error('Error generating summary:', error)
         return { success: false, error: (error as Error).message }
     }
 }
