@@ -72,16 +72,16 @@ interface LocalDevlog {
 
 const RETURN_REASONS = [
   'Functionality not clearly demonstrated',
-  'Unclear or confusing project demonstration',
-  'Technical issues in the certification video',
-  'Insufficient proof that project works',
-  'Demo Link not working during review',
-  'Project not fully working',
+  'Unclear or confusing cert video',
+  'Technical issues in cert video',
+  'Insufficient proof in cert video that project works',
+  'Demo Link not working during YSWS review',
   'GitHub repository not accessible',
   'No demo video provided',
   'No AI use declaration',
+  'Insufficient README',
+  'Project started before Flavortown, but not labelled as an updated project.',
   'Other certification-related issues',
-  'Insufficient README documentation',
 ]
 
 export function Review({ data, canEdit }: Props) {
