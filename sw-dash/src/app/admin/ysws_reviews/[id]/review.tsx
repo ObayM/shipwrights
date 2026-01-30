@@ -326,11 +326,11 @@ export function Review({ data, canEdit }: Props) {
               low quality to the point it doesn't do what it says it does (shipwrights messed up -
               return to them)
             </li>
-            <li>Looks like ai, but undeclared</li>
-            <li>Looks like over 30% ai</li>
+            <li>Looks like ai, but is undeclared (check declaration on the ft project page) </li>
+            <li>Looks like over 30% ai - even if it is declared</li>
             <li>Looks like it isn't shipped (shipwrights messed up)</li>
             <li>last project edit was before the event launch</li>
-            <li>project was previously put into the ysws db</li>
+            <li>project was worked on before event, and not marked as Project Update: in description (return to shipwrights)</li>
           </ul>
         </div>
       </div>
