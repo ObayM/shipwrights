@@ -5,9 +5,14 @@ const prisma = new PrismaClient()
 async function main() {
     console.log('Start seeding ...')
 
-    await prisma.shipCert.deleteMany({})
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('Seeding is disabled in production environment to prevent data loss.')
+    }
+    
+    // await prisma.shipCert.deleteMany({})
+    // use this line if your db became a mess ^^
 
-    const project1 = await prisma.shipCert.create({
+    await prisma.shipCert.create({
         data: {
             projectName: 'Machine Learning Model for Flood Detection in Karachi',
             ftProjectId: '4726',
@@ -23,7 +28,7 @@ async function main() {
         },
     })
 
-    const project2 = await prisma.shipCert.create({
+    await prisma.shipCert.create({
         data: {
             projectName: 'Asseto Corsa Reinforcement Learning',
             ftProjectId: '3102',
