@@ -262,7 +262,8 @@ export function Review({ data, canEdit }: Props) {
                   href={data.shipCert.repoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onAuxClick={(e) => e.button === 1 && setRepoOpened(true)}
+                  onClick={() => setRepoOpened(true)}
+                  onAuxClick={() => setRepoOpened(true)}
                   className="bg-amber-900/50 text-amber-300 px-3 py-1.5 rounded font-mono text-xs hover:bg-amber-800/50 transition-colors"
                 >
                   Repo
@@ -273,7 +274,8 @@ export function Review({ data, canEdit }: Props) {
                   href={data.shipCert.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onAuxClick={(e) => e.button === 1 && setDemoOpened(true)}
+                  onClick={() => setDemoOpened(true)}
+                  onAuxClick={() => setDemoOpened(true)}
                   className="bg-amber-900/50 text-amber-300 px-3 py-1.5 rounded font-mono text-xs hover:bg-amber-800/50 transition-colors"
                 >
                   Demo
@@ -553,7 +555,7 @@ export function Review({ data, canEdit }: Props) {
                       href={data.shipCert.demoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onAuxClick={() => setDemoOpened(true)}
+                      onClick={() => setDemoOpened(true)}
                       className="text-red-300 hover:text-red-200 underline"
                     >
                       Check the Demo link (cuz u didn't..)
@@ -567,7 +569,7 @@ export function Review({ data, canEdit }: Props) {
                       href={data.shipCert.repoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onAuxClick={() => setRepoOpened(true)}
+                      onClick={() => setRepoOpened(true)}
                       className="text-red-300 hover:text-red-200 underline"
                     >
                       Check the Repo link (cuz u didn't..)
