@@ -268,7 +268,7 @@ def project_summary():
         response = requests.post(
             url="https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {OPENROUTER_KEY}",
+                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
                 "Content-Type": "application/json"
             },
             json={
