@@ -79,6 +79,7 @@ const RETURN_REASONS = [
   'Project not fully working',
   'GitHub repository not accessible',
   'No demo video provided',
+  'No AI use declaration',
   'Other certification-related issues',
   'Insufficient README documentation',
 ]
@@ -248,6 +249,12 @@ export function Review({ data, canEdit }: Props) {
                   <span className="text-white">{data.reviewer.username}</span>
                 </div>
               )}
+              {data.returnReason && (
+                <div>
+                  <span className="text-gray-400">Return Reason:</span>{' '}
+                  <span className="text-red-400">{data.returnReason}</span>
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-amber-900/30">
               {data.shipCert.repoUrl && (
@@ -255,7 +262,7 @@ export function Review({ data, canEdit }: Props) {
                   href={data.shipCert.repoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => setRepoOpened(true)}
+                  onAuxClick={(e) => e.button === 1 && setRepoOpened(true)}
                   className="bg-amber-900/50 text-amber-300 px-3 py-1.5 rounded font-mono text-xs hover:bg-amber-800/50 transition-colors"
                 >
                   Repo
@@ -266,7 +273,7 @@ export function Review({ data, canEdit }: Props) {
                   href={data.shipCert.demoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => setDemoOpened(true)}
+                  onAuxClick={(e) => e.button === 1 && setDemoOpened(true)}
                   className="bg-amber-900/50 text-amber-300 px-3 py-1.5 rounded font-mono text-xs hover:bg-amber-800/50 transition-colors"
                 >
                   Demo
@@ -401,7 +408,30 @@ export function Review({ data, canEdit }: Props) {
 
                       {d.commits.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-zinc-700">
-                          <div className="text-gray-400 font-mono text-xs mb-2">Git Activity</div>
+                          <div className="text-gray-400 font-mono text-xs mb-2">
+                            {(() => {
+                              const sortedCommits = [...d.commits].sort(
+                                (a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime()
+                              )
+                              const firstSha = sortedCommits[0]?.sha
+                              const lastSha = sortedCommits[sortedCommits.length - 1]?.sha
+                              const repoUrl = data.shipCert.repoUrl
+                              if (repoUrl && firstSha && lastSha && firstSha !== lastSha) {
+                                const compareUrl = `${repoUrl.replace(/\/$/, '')}/compare/${firstSha}...${lastSha}`
+                                return (
+                                  <a
+                                    href={compareUrl}
+                                    target="_blank"
+                                    rel="noopener"
+                                    className="text-amber-400 hover:text-amber-300 underline"
+                                  >
+                                    Git Activity
+                                  </a>
+                                )
+                              }
+                              return 'Git Activity'
+                            })()}
+                          </div>
                           <CommitChart
                             commits={d.commits.map((c) => ({ ...c, ts: new Date(c.ts) }))}
                             repoUrl={data.shipCert.repoUrl ?? undefined}
@@ -517,10 +547,32 @@ export function Review({ data, canEdit }: Props) {
               </div>
               <div className="text-red-300 font-mono text-xs space-y-1">
                 {data.shipCert.demoUrl && !demoOpened && (
-                  <div>• Check the Demo link (cuz u didn't..)</div>
+                  <div>
+                    •{' '}
+                    <a
+                      href={data.shipCert.demoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onAuxClick={() => setDemoOpened(true)}
+                      className="text-red-300 hover:text-red-200 underline"
+                    >
+                      Check the Demo link (cuz u didn't..)
+                    </a>
+                  </div>
                 )}
                 {data.shipCert.repoUrl && !repoOpened && (
-                  <div>• Check the Repo link (cuz u didn't..)</div>
+                  <div>
+                    •{' '}
+                    <a
+                      href={data.shipCert.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onAuxClick={() => setRepoOpened(true)}
+                      className="text-red-300 hover:text-red-200 underline"
+                    >
+                      Check the Repo link (cuz u didn't..)
+                    </a>
+                  </div>
                 )}
               </div>
             </div>
