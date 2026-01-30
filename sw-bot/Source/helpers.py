@@ -14,7 +14,6 @@ AVAILABLE_TYPES = [
     "Minecraft Mods", "Hardware", "Android App", "iOS App", "Other"
 ]
 
-
 def check_rate(ip):
     now = datetime.now()
     rate_limits[ip] = [t for t in rate_limits[ip] if t > now - timedelta(seconds=WINDOW)]

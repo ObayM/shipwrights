@@ -8,7 +8,6 @@ load_dotenv()
 
 PORT = 45200
 SW_API_KEY = os.environ.get("SW_API_KEY")
-OPENROUTER_KEY = os.environ.get("OPENROUTER_KEY")
 AI_MODEL = "google/gemini-3-flash-preview"
 
 logging.basicConfig(
@@ -42,7 +41,7 @@ def ticket_summery():
         response = requests.post(
             url="https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {OPENROUTER_KEY}",
+                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
                 "Content-Type": "application/json"
             },
             json={
@@ -113,7 +112,7 @@ def auto_complete():
         response = requests.post(
             url="https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {OPENROUTER_KEY}",
+                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
                 "Content-Type": "application/json"
             },
             json={
@@ -181,7 +180,7 @@ def detect_issue():
         response = requests.post(
             url="https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {OPENROUTER_KEY}",
+                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
                 "Content-Type": "application/json"
             },
             json={
@@ -239,6 +238,20 @@ def detect_issue():
     return jsonify({
         "detection": ai_response['detection'].lower(),
     }), 200
+
+@app.get("/projects/type")
+@app.get("/projects/type")
+def type_check():
+    data = {
+        "title": request.json.get("title"),
+        "desc": request.json.get("desc"),
+        "readmeUrl": request.json.get("readmeUrl"),
+        "demoUrl": request.json.get("demoUrl"),
+        "repoUrl": request.json.get("repoUrl"),
+    }
+    result = helpers.check_type(data)
+    return jsonify(result), 200
+
 
 
 if __name__ == "__main__":

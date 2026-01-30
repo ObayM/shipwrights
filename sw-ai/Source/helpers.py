@@ -1,7 +1,31 @@
+import requests, re, json, os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+OPENROUTER_KEY = os.environ.get("OPENROUTER_KEY")
+
+TYPES = [
+  "CLI",
+  "Cargo",
+  "Web App",
+  "Chat Bot",
+  "Extension",
+  "Desktop App (Windows)",
+  "Desktop App (Linux)",
+  "Desktop App (macOS)",
+  "Minecraft Mods",
+  "Hardware",
+  "Android App",
+  "iOS App",
+  "Other",
+]
+
+
 def format_messages(ticket_messages):
     conversation=""
     for message in ticket_messages:
-        if message.get("isStaff", False) == True:
+        if message.get("isStaff", False):
             conversation += f"Shipwrights team: {message.get('msg', 'None')}"
         else:
             conversation += f"User: {message.get('msg', 'None')}"
@@ -111,3 +135,145 @@ def clean_json_response(content: str) -> str:
     if content.endswith("```"):
         content = content[:-3]
     return content.strip()
+
+
+def get_readme(url):
+    if not url:
+        return ""
+    try:
+        raw = url.replace('github.com', 'raw.githubusercontent.com').replace("/blob/", "/")
+        result = requests.get(raw, timeout=10)
+        if result.ok:
+            return result.text
+        if result.status_code == 404:
+            return "Readme doesn't exist"
+        return ""
+    except Exception as e:
+        print(f"Error occured whilst fetching readme for {url}: {e}")
+        return ""
+
+def get_releases(url):
+    data = {"has": False, "files": [], "notes": "", "hints": []}
+    if not url or "github.com" not in url:
+        return data
+    try:
+        match = re.search(r'github\.com/([^/]+)/([^/]+)', url)
+        if not match:
+            return data
+        owner, repo = match.groups()
+        repo = repo.replace(".git", "")
+        result = requests.get(
+            f"https://api.github.com/repos/{owner}/{repo}/releases?per_page=3",
+            timeout=10,
+            headers={"Accept": "application/vnd.github.v3+json"},
+        )
+        if not result.ok:
+            return data
+        rels = result.json()
+        if not rels:
+            return data
+        files = []
+        hints = []
+        notes = ""
+        for r in rels:
+            if r.get("body"):
+                notes += r["body"][:500] + "\n"
+            for a in r.get("assets", []):
+                n = a["name"].lower()
+                files.append(n)
+                if n.endswith(".exe") or "windows" in n or "win64" in n or "win32" in n:
+                    hints.append("win")
+                if n.endswith(".dmg") or n.endswith(".pkg") or "macos" in n or "darwin" in n:
+                    hints.append("mac")
+                if n.endswith(".deb") or n.endswith(".rpm") or n.endswith(".appimage") or "linux" in n:
+                    hints.append("linux")
+                if n.endswith(".apk") or "android" in n:
+                    hints.append("android")
+                if n.endswith(".ipa") or "ios" in n:
+                    hints.append("ios")
+                if n.endswith(".jar") or "fabric" in n or "forge" in n:
+                    hints.append("mc-mod")
+                if n.endswith(".vsix") or n.endswith(".xpi") or n.endswith(".crx"):
+                    hints.append("ext")
+        return {
+            "has": True,
+            "files": list(set(files)),
+            "notes": notes[:1000],
+            "hints": list(set(hints)),
+        }
+    except Exception as e:
+        print(f"Error occured whilst fetching releases for {url}: {e}")
+        return data
+
+def check_type(data: dict) -> dict:
+    readme = get_readme(data.get("readmeUrl", ""))
+    rel = get_releases(data.get("repoUrl", ""))
+
+    input_data = {
+        "title": data.get("title", ""),
+        "desc": data.get("desc", ""),
+        "readmeUrl": data.get("readmeUrl", ""),
+        "demoUrl": data.get("demoUrl", ""),
+        "repoUrl": data.get("repoUrl", ""),
+        "readmeContent": (readme or "")[:2000],
+        "rel": rel,
+    }
+
+    if not OPENROUTER_KEY:
+        return {"type": "Unknown", "debug": {"input": input_data, "request": {}, "response": None, "error": "no OPENROUTER_KEY"}}
+
+    ctx = ""
+    if rel.get("has"):
+        ctx = f"\n\nFILES: {', '.join(rel['files'])}"
+        if rel.get("hints"):
+            ctx += f"\nHINTS: {', '.join(rel['hints'])}"
+        if rel.get("notes"):
+            ctx += f"\nNOTES:\n{rel['notes']}"
+
+    req_body = {
+        "model": 'google/gemini-2.5-flash-lite',
+        "messages": [
+            {
+                "role": "system",
+                "content": f"You are a project classifier. Classify projects into EXACTLY one of these categories: {', '.join(TYPES)}. Respond with ONLY valid JSON: {{\"type\": \"category\", \"confidence\": 0.0-1.0}}. No markdown, no explanation, no thinking tags.",
+            },
+            {
+                "role": "user",
+                "content": f"Title: {data.get('title', '')}\nDescription: {data.get('desc', '')}\nDemo URL: {data.get('demoUrl', '')}\nRepo: {data.get('repoUrl', '')}\n\nREADME:\n{readme or ''}{ctx}",
+            },
+        ],
+    }
+
+    import time
+    for i in range(3):
+        try:
+            res = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": f"Bearer {OPENROUTER_KEY}", "Content-Type": "application/json"},
+                json=req_body,timeout=30,
+            )
+            result = res.json()
+
+            if not res.ok:
+                if i < 2:
+                    time.sleep(5)
+                    continue
+                return {"type": "Unknown", "debug": {"input": input_data, "request": req_body, "response": result, "error": f"status {res.status_code}"}}
+
+            content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            content = content.replace("```json", "").replace("```", "").strip()
+            if "<think>" in content:
+                content = content.split("</think>")[-1].strip()
+
+            parsed = json.loads(content)
+            final_type = parsed["type"] if parsed.get("confidence", 0) >= 0.8 else "Unknown"
+
+            return {"type": final_type, "debug": {"input": input_data, "request": req_body, "response": result, "error": None}}
+
+        except Exception as e:
+            if i < 2:
+                time.sleep(5)
+                continue
+            return {"type": "Unknown", "debug": {"input": input_data, "request": req_body, "response": None, "error": str(e)}}
+
+    return {"type": "Unknown", "debug": {"input": input_data, "request": req_body, "response": None, "error": "max retries"}}
