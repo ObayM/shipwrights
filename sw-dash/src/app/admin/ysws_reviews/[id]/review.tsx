@@ -56,6 +56,8 @@ interface ReviewData {
   shipCert: ShipCert
   devlogs: Devlog[]
   reviewer: { username: string } | null
+  aiDeclaration?: string | null
+  fraudUrls?: { billy: string; joe: string } | null
 }
 
 interface Props {
@@ -220,11 +222,41 @@ export function Review({ data, canEdit }: Props) {
               <div>
                 <span className="text-gray-400">Submitter:</span>{' '}
                 <span className="text-white">{data.shipCert.ftUsername}</span>
+                {data.fraudUrls && (
+                  <div className="flex gap-2 mt-2">
+                    <a
+                      href={data.fraudUrls.billy}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-amber-900/40 text-amber-200 px-3 py-1.5 rounded-xl font-mono text-xs hover:bg-amber-800/50 hover:scale-[1.02] active:scale-[0.98] transition-all border-2 border-amber-900/40"
+                    >
+                      Billy
+                    </a>
+                    <a
+                      href={data.fraudUrls.joe}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-amber-900/40 text-amber-200 px-3 py-1.5 rounded-xl font-mono text-xs hover:bg-amber-800/50 hover:scale-[1.02] active:scale-[0.98] transition-all border-2 border-amber-900/40"
+                    >
+                      Joe
+                    </a>
+                  </div>
+                )}
               </div>
               <div>
                 <span className="text-gray-400">Type:</span>{' '}
                 <span className="text-white">{data.shipCert.projectType || 'unknown'}</span>
               </div>
+              {data.aiDeclaration !== undefined && (
+                <div>
+                  <span className="text-gray-400">AI Declaration:</span>{' '}
+                  <span
+                    className={data.aiDeclaration ? 'text-amber-300' : 'text-red-400 font-bold'}
+                  >
+                    {data.aiDeclaration || 'NOT DECLARED!'}
+                  </span>
+                </div>
+              )}
               <div>
                 <span className="text-gray-400">Ship Certified:</span>{' '}
                 <span className="text-green-400">{data.shipCert.reviewer?.username || '-'}</span>
