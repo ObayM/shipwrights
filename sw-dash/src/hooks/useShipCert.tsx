@@ -29,9 +29,13 @@ export function useShipCert(shipId: string) {
   const [submitting, setSubmitting] = useState(false)
   const [bounty, setBounty] = useState('')
   const [bountySaved, setBountySaved] = useState(false)
+  const [showReport, setShowReport] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportBusy, setReportBusy] = useState(false)
 
   const canEdit = user?.role ? can(user.role, PERMS.certs_edit) : false
   const canOverride = user?.role ? can(user.role, PERMS.certs_override) : false
+  const canReport = user?.role ? can(user.role, PERMS.certs_report) : false
   const isViewOnly = !canEdit
 
   const loadU = async () => {
@@ -397,6 +401,25 @@ export function useShipCert(shipId: string) {
     setTimeout(() => setBountySaved(false), 2000)
   }
 
+  const submitReport = async () => {
+    if (!reportReason.trim() || !cert?.ftId) return
+    setReportBusy(true)
+    try {
+      await fetch(`/api/admin/ship_certifications/${shipId}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ftProjectId: cert.ftId,
+          details: `Ship Cert Review is reporting this project: ${reportReason}`,
+        }),
+      })
+      setShowReport(false)
+      setReportReason('')
+    } finally {
+      setReportBusy(false)
+    }
+  }
+
   return {
     cert,
     setCert,
@@ -440,5 +463,12 @@ export function useShipCert(shipId: string) {
     updateBounty,
     saveBounty,
     bountySaved,
+    canReport,
+    showReport,
+    setShowReport,
+    reportReason,
+    setReportReason,
+    reportBusy,
+    submitReport,
   }
 }

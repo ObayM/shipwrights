@@ -4,6 +4,7 @@ export const PERMS = {
   certs_admin: 'certs_admin',
   certs_override: 'certs_override',
   certs_bounty: 'certs_bounty',
+  certs_report: 'certs_report',
 
   users_view: 'users_view',
   users_add: 'users_add',
@@ -62,6 +63,7 @@ export const ROLES = {
     perms: [
       PERMS.certs_view,
       PERMS.certs_edit,
+      PERMS.certs_report,
       //PERMS.assign_view,
       //PERMS.assign_edit,
       PERMS.support_admin,
@@ -81,6 +83,7 @@ export const ROLES = {
     perms: [
       PERMS.certs_view,
       PERMS.certs_edit,
+      PERMS.certs_report,
       PERMS.support_view,
       PERMS.ysws_view,
       PERMS.ysws_edit,
