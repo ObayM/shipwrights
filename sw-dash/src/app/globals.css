@@ -1,40 +1,264 @@
 @import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-card-bg-start: var(--card-bg-start);
+  --color-card-bg-end: var(--card-bg-end);
+
+  --color-card-border: var(--card-border);
+  --color-card-border-subtle: var(--card-border-subtle);
+
+  --color-input-bg: var(--input-bg);
+  --color-item-bg: var(--item-bg);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-body: var(--text-body);
+  --color-text-muted: var(--text-muted);
+  --color-text-markdown: var(--text-markdown);
+
+  --color-accent-active: var(--accent-active);
+  --color-accent-border: var(--accent-border);
+  --color-accent-text: var(--accent-text);
+
+  --color-shadow-color: var(--shadow-color);
+
+  --color-border-dashed: var(--border-dashed);
+  --color-bg-highlight: var(--bg-highlight);
+  --color-bg-glass: var(--bg-glass);
+
+  /* state colors */
+  --color-badge-warn-bg: var(--badge-warn-bg);
+  --color-badge-warn-border: var(--badge-warn-border);
+  --color-badge-warn-text: var(--badge-warn-text);
+
+  --color-card-info-bg: var(--card-info-bg);
+  --color-card-info-border: var(--card-info-border);
+  --color-text-info-header: var(--text-info-header);
+  --color-text-info-body: var(--text-info-body);
+  --color-text-info-icon: var(--text-info-icon);
+
+  --color-card-success-bg: var(--card-success-bg);
+  --color-card-success-border: var(--card-success-border);
+  --color-text-success-header: var(--text-success-header);
+  --color-text-success-body: var(--text-success-body);
+  --color-text-success-icon: var(--text-success-icon);
+
+  /* role colors */
+  --color-role-megawright-bg: var(--role-megawright-bg);
+  --color-role-megawright-border: var(--role-megawright-border);
+  --color-role-megawright-text: var(--role-megawright-text);
+
+  --color-role-hq-bg: var(--role-hq-bg);
+  --color-role-hq-border: var(--role-hq-border);
+  --color-role-hq-text: var(--role-hq-text);
+
+  --color-role-captain-bg: var(--role-captain-bg);
+  --color-role-captain-border: var(--role-captain-border);
+  --color-role-captain-text: var(--role-captain-text);
+
+  --color-role-shipwright-bg: var(--role-shipwright-bg);
+  --color-role-shipwright-border: var(--role-shipwright-border);
+  --color-role-shipwright-text: var(--role-shipwright-text);
+
+  --color-role-fraudster-bg: var(--role-fraudster-bg);
+  --color-role-fraudster-border: var(--role-fraudster-border);
+  --color-role-fraudster-text: var(--role-fraudster-text);
+
+  --color-role-syswright-bg: var(--role-syswright-bg);
+  --color-role-syswright-border: var(--role-syswright-border);
+  --color-role-syswright-text: var(--role-syswright-text);
+
+  /* button colors */
+  --color-button-primary-bg: var(--button-primary-bg);
+  --color-button-primary-hover: var(--button-primary-hover);
+  --color-button-primary-text: var(--button-primary-text);
+  --color-button-primary-border: var(--button-primary-border);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  /* default theme (Dark/Amber) */
+  --background: #000000;
+  --foreground: #1a1a1a;
+
+  --card-bg-start: rgba(24, 24, 27, 0.9);
+  --card-bg-end: rgba(0, 0, 0, 0.9);
+
+  --card-border: rgba(120, 53, 15, 0.4);
+  --card-border-subtle: rgba(120, 53, 15, 0.2);
+
+  --input-bg: rgba(9, 9, 11, 0.5);
+  --item-bg: rgba(24, 24, 27, 0.3);
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(254, 154, 0, 0.7);
+  --text-body: #fde68a;
+  --text-muted: #6b7280;
+
+  --accent-active: rgba(217, 119, 6, 0.2);
+  --accent-border: rgba(217, 119, 6, 0.4);
+  --accent-text: #fbbf24;
+
+  --shadow-color: rgba(69, 26, 3, 0);
+
+  /* state colors */
+  --badge-warn-bg: rgba(234, 179, 8, 0.1);
+  --badge-warn-border: #eab308;
+  --badge-warn-text: #facc15;
+
+  --card-info-bg: rgba(30, 58, 138, 0.3);
+  --card-info-border: rgba(29, 78, 216, 0.5);
+  --text-info-header: #93c5fd;
+  --text-info-body: rgba(96, 165, 250, 0.7);
+  --text-info-icon: #60a5fa;
+
+  --card-success-bg: rgba(20, 83, 45, 0.3);
+  --card-success-border: rgba(21, 128, 61, 0.5);
+  --text-success-header: #86efac;
+  --text-success-body: rgba(74, 222, 128, 0.7);
+  --text-success-icon: #4ade80;
+
+  /* role colors */
+  --role-megawright-bg: rgba(76, 29, 149, 0.3);
+  --role-megawright-border: rgba(74, 20, 140, 0.5);
+  --role-megawright-text: rgb(192, 132, 252);
+
+  --role-hq-bg: rgba(131, 24, 67, 0.3);
+  --role-hq-border: rgba(190, 24, 93, 0.5);
+  --role-hq-text: #f472b6;
+
+  --role-captain-bg: rgba(127, 29, 29, 0.3);
+  --role-captain-border: rgba(185, 28, 28, 0.5);
+  --role-captain-text: rgb(248, 113, 113);
+
+  --role-shipwright-bg: rgba(30, 58, 138, 0.3);
+  --role-shipwright-border: rgba(29, 78, 216, 0.5);
+  --role-shipwright-text: rgb(147, 197, 253);
+
+  --role-fraudster-bg: rgba(124, 45, 18, 0.3);
+  --role-fraudster-border: rgba(194, 65, 12, 0.5);
+  --role-fraudster-text: #fb923c;
+
+  --role-syswright-bg: rgba(4, 120, 87, 0.3);
+  --role-syswright-border: rgba(5, 150, 105, 0.5);
+  --role-syswright-text: rgb(74, 222, 128);
+
+
+  /* button colors */
+  --button-primary-bg: #d97706;
+  --button-primary-hover: #b45309;
+  --button-primary-text: #ffffff;
+  --button-primary-border: rgba(245, 158, 11, 0.5);
+
+  --text-markdown: #ffffff;
+
+  /* rich ui elements */
+  --border-dashed: rgba(245, 158, 11, 0.4);
+  --bg-highlight: rgba(254, 215, 170, 0.1);
+  --bg-glass: rgba(24, 24, 27, 0.6);
+
+}
+
+[data-theme='paper'] {
+  /* Paper theme */
+  --background: #fdfbf7;
+  --foreground: #e5e7eb;
+
+  --card-bg-start: #eae7e1;
+  --card-bg-end: #eae7e1;
+
+  --card-border: #d6d3cd;
+  --card-border-subtle: #e5e7eb;
+
+  --input-bg: #ffffff;
+  --item-bg: #f3f4f6;
+
+  --text-primary: #1a1a1a;
+  --text-secondary: #4b5563;
+  --text-body: #374151;
+  --text-muted: #686d77;
+
+  --accent-active: #e5e7eb;
+  --accent-border: #d1d5db;
+  --accent-text: #1a1a1a;
+
+  --shadow-color: rgba(0, 0, 0, 0.1);
+
+  /* state Colors */
+  --badge-warn-bg: rgba(234, 179, 8, 0.1);
+  --badge-warn-border: #eab308;
+  --badge-warn-text: #facc15;
+
+  --card-info-bg: rgba(30, 58, 138, 0.3);
+  --card-info-border: rgba(29, 78, 216, 0.5);
+  --text-info-header: #93c5fd;
+  --text-info-body: rgba(31, 54, 83, 0.7);
+  --text-info-icon: #60a5fa;
+
+  --card-success-bg: rgba(20, 83, 45, 0.3);
+  --card-success-border: rgba(21, 128, 61, 0.5);
+  --text-success-header: #2a5439;
+  --text-success-body: #0a2600;
+  --text-success-icon: #4ade80;
+
+  /* role colors */
+  --role-megawright-bg: rgba(76, 29, 149, 0.3);
+  --role-megawright-border: rgba(74, 20, 140, 0.5);
+  --role-megawright-text: rgb(63, 38, 88);
+
+  --role-hq-bg: rgba(131, 24, 67, 0.3);
+  --role-hq-border: rgba(190, 24, 93, 0.5);
+  --role-hq-text: #441b30;
+
+  --role-captain-bg: rgba(127, 29, 29, 0.3);
+  --role-captain-border: rgba(185, 28, 28, 0.5);
+  --role-captain-text: rgb(96, 40, 40);
+
+  --role-shipwright-bg: rgba(30, 58, 138, 0.3);
+  --role-shipwright-border: rgba(29, 78, 216, 0.5);
+  --role-shipwright-text: rgb(18, 36, 57);
+
+  --role-fraudster-bg: rgba(124, 45, 18, 0.3);
+  --role-fraudster-border: rgba(194, 65, 12, 0.5);
+  --role-fraudster-text: #2b1a0b;
+
+  --role-syswright-bg: rgba(4, 120, 87, 0.3);
+  --role-syswright-border: rgba(5, 150, 105, 0.5);
+  --role-syswright-text: rgb(11, 37, 21);
+
+  /* button colors */
+  --button-primary-bg: #1a1a1a;
+  --button-primary-hover: #333333;
+  --button-primary-text: #ffffff;
+  --button-primary-border: #000000;
+
+  --text-markdown: #374151;
+
+  /* rich ui elements */
+  --border-dashed: #d1d5db;
+  --bg-highlight: #f3f4f6;
+  --bg-glass: rgba(255, 255, 255, 0.8);
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--text-body);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .bg-grid {
-  background-color: #000000;
+  background-color: var(--background);
   background-image:
-    linear-gradient(#1a1a1a 1px, transparent 1px),
-    linear-gradient(90deg, #1a1a1a 1px, transparent 1px);
+    linear-gradient(var(--foreground) 1px, transparent 1px),
+    linear-gradient(90deg, var(--foreground) 1px, transparent 1px);
   background-size: 40px 40px;
   pointer-events: none;
 }
 
-.bg-grid > * {
+.bg-grid>* {
   pointer-events: auto;
 }
 
@@ -54,56 +278,4 @@ body {
 
 *::-webkit-scrollbar-thumb:hover {
   background: #92400e;
-}
-
-*::-webkit-scrollbar-corner {
-  background: transparent;
-}
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #78350f transparent;
-}
-
-.markdown-preview {
-  @apply font-sans text-sm;
-}
-
-.markdown-preview code:not(pre code) {
-  @apply bg-gray-800 px-1.5 py-0.5 rounded text-xs text-gray-200 font-mono;
-}
-
-.markdown-preview pre {
-  @apply rounded-md overflow-hidden my-4;
-}
-
-.markdown-preview pre code {
-  @apply text-xs leading-relaxed;
-}
-
-.markdown-preview ul.contains-task-list {
-  @apply list-none;
-}
-
-.markdown-preview ul.contains-task-list li {
-  @apply flex items-start gap-2;
-}
-
-.markdown-preview ul.contains-task-list li input[type='checkbox'] {
-  @apply mt-1 cursor-default;
-}
-
-.markdown-preview table {
-  @apply w-full border-collapse;
-}
-
-.markdown-preview img {
-  @apply rounded-lg border border-gray-700;
-}
-
-.markdown-preview a {
-  @apply break-words;
-}
-
-.markdown-preview blockquote p:last-child {
-  @apply mb-0;
 }

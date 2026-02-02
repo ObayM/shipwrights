@@ -8,6 +8,7 @@ import type { PublicKeyCredentialCreationOptionsJSON } from '@simplewebauthn/bro
 import { SKILLS } from '@/lib/skills'
 import NotifToggle from '@/components/ui/notif-toggle'
 import Wip from '@/components/ui/wip'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 interface User {
   id: number
@@ -229,34 +230,34 @@ export default function Profile() {
   const skel = () => (
     <div className="bg-grid min-h-screen w-full p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="h-4 w-40 bg-zinc-800/40 rounded mb-6"></div>
+        <div className="h-4 w-40 bg-item-bg rounded mb-6"></div>
         <div className="grid grid-cols-1 gap-8">
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 min-h-[200px]">
-            <div className="h-5 w-24 bg-zinc-800/50 rounded mb-4"></div>
-            <div className="h-4 w-40 bg-zinc-800/30 rounded mb-4"></div>
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 min-h-[200px]">
+            <div className="h-5 w-24 bg-item-bg rounded mb-4"></div>
+            <div className="h-4 w-40 bg-item-bg rounded mb-4"></div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-10 bg-zinc-800/30 rounded-2xl"></div>
+                <div key={i} className="h-10 bg-item-bg rounded-2xl"></div>
               ))}
             </div>
           </div>
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 min-h-[160px]">
-            <div className="h-5 w-28 bg-zinc-800/50 rounded mb-4"></div>
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 min-h-[160px]">
+            <div className="h-5 w-28 bg-item-bg rounded mb-4"></div>
             <div className="space-y-3">
               {[...Array(2)].map((_, i) => (
-                <div key={i} className="h-14 bg-zinc-800/30 rounded-2xl"></div>
+                <div key={i} className="h-14 bg-item-bg rounded-2xl"></div>
               ))}
             </div>
           </div>
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 min-h-[180px]">
-            <div className="h-5 w-32 bg-zinc-800/50 rounded mb-4"></div>
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 min-h-[180px]">
+            <div className="h-5 w-32 bg-item-bg rounded mb-4"></div>
             <div className="flex gap-2 mb-4">
-              <div className="flex-1 h-10 bg-zinc-800/30 rounded-2xl"></div>
-              <div className="h-10 w-24 bg-zinc-800/40 rounded-2xl"></div>
+              <div className="flex-1 h-10 bg-item-bg rounded-2xl"></div>
+              <div className="h-10 w-24 bg-item-bg rounded-2xl"></div>
             </div>
             <div className="space-y-2">
               {[...Array(2)].map((_, i) => (
-                <div key={i} className="h-16 bg-zinc-800/20 rounded-2xl"></div>
+                <div key={i} className="h-16 bg-item-bg rounded-2xl"></div>
               ))}
             </div>
           </div>
@@ -270,7 +271,7 @@ export default function Profile() {
   if (error && !user) {
     return (
       <div className="bg-grid min-h-screen w-full flex items-center justify-center">
-        <div className="text-amber-400 font-mono">{error}</div>
+        <div className="text-text-primary font-mono">{error}</div>
       </div>
     )
   }
@@ -280,15 +281,15 @@ export default function Profile() {
       <div className="max-w-4xl mx-auto">
         <Link
           href="/admin"
-          className="mb-6 text-amber-300/70 hover:text-amber-200 font-mono text-sm transition-colors inline-block"
+          className="mb-6 text-text-secondary hover:text-text-primary font-mono text-sm transition-colors inline-block"
         >
           ← back to dashboard
         </Link>
 
         <div className="grid grid-cols-1 gap-8">
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-amber-950/30">
-            <h2 className="text-amber-400 font-mono text-lg mb-4">your skills</h2>
-            <p className="text-amber-300/70 font-mono text-sm mb-4">click to add/remove</p>
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-shadow-color">
+            <h2 className="text-text-primary font-mono text-lg mb-4">your skills</h2>
+            <p className="text-text-secondary font-mono text-sm mb-4">click to add/remove</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {SKILLS.map((s) => {
                 const selected = skills.includes(s)
@@ -297,11 +298,10 @@ export default function Profile() {
                     key={s}
                     onClick={() => flip(s)}
                     disabled={updating}
-                    className={`px-4 py-2 rounded-2xl font-mono text-sm border-2 transition-all active:scale-[0.98] hover:scale-[1.02] ${
-                      selected
-                        ? 'bg-amber-900/30 text-amber-400 border-amber-700/50 hover:bg-amber-900/50 hover:border-amber-600/50'
-                        : 'bg-zinc-900/30 text-amber-300/60 border-amber-900/30 hover:border-amber-800/40'
-                    } disabled:opacity-50`}
+                    className={`px-4 py-2 rounded-2xl font-mono text-sm border-2 transition-all active:scale-[0.98] hover:scale-[1.02] ${selected
+                      ? 'bg-accent-active text-text-primary border-accent-border'
+                      : 'bg-item-bg text-text-secondary border-card-border-subtle hover:border-card-border'
+                      } disabled:opacity-50`}
                   >
                     {selected && '✓ '}
                     {s}
@@ -311,32 +311,37 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-amber-950/30">
-            <h2 className="text-amber-400 font-mono text-lg mb-4">notifications</h2>
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-shadow-color">
+            <h2 className="text-text-primary font-mono text-lg mb-4">notifications</h2>
 
             <div className="space-y-3">
               <NotifToggle />
 
-              <div className="bg-zinc-900/30 border-2 border-amber-900/30 rounded-2xl p-4 relative">
+              <div className="bg-item-bg border-2 border-card-border-subtle rounded-2xl p-4 relative">
                 <Wip />
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-amber-200 font-medium text-sm">slack dm notifications</div>
-                    <div className="text-amber-300/60 text-xs mt-1">get notified via slack dms</div>
+                    <div className="text-text-body font-medium text-sm">slack dm notifications</div>
+                    <div className="text-text-secondary text-xs mt-1">get notified via slack dms</div>
                   </div>
                   <button
                     disabled
-                    className="relative inline-flex h-6 w-11 items-center rounded-full bg-amber-900/20 opacity-50 cursor-not-allowed"
+                    className="relative inline-flex h-6 w-11 items-center rounded-full bg-input-bg opacity-50 cursor-not-allowed"
                   >
-                    <span className="inline-block h-4 w-4 transform rounded-full bg-amber-400/50 translate-x-1" />
+                    <span className="inline-block h-4 w-4 transform rounded-full bg-text-muted translate-x-1" />
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-amber-950/30">
-            <h2 className="text-amber-400 font-mono text-lg mb-4">unhakable keys</h2>
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-shadow-color">
+            <h2 className="text-text-primary font-mono text-lg mb-4">appearance</h2>
+            <ThemeToggle />
+          </div>
+
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-shadow-color">
+            <h2 className="text-text-primary font-mono text-lg mb-4">unhakable keys</h2>
 
             <div className="mb-4">
               <div className="flex gap-2 mb-2">
@@ -345,32 +350,32 @@ export default function Profile() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="shiny key"
-                  className="flex-1 bg-zinc-900 border-2 border-amber-900/40 text-amber-200 px-3 py-2 rounded-2xl font-mono text-sm focus:outline-none focus:border-amber-600/50"
+                  className="flex-1 bg-input-bg border-2 border-card-border-subtle text-text-primary px-3 py-2 rounded-2xl font-mono text-sm focus:outline-none focus:border-accent-border"
                   disabled={reg}
                 />
                 <button
                   onClick={add}
                   disabled={reg || !name.trim()}
-                  className="bg-amber-900/40 text-amber-200 px-4 py-2 rounded-2xl font-mono text-sm hover:bg-amber-800/50 hover:scale-[1.02] active:scale-[0.98] transition-all border-2 border-amber-900/40 disabled:opacity-50"
+                  className="bg-accent-active text-text-primary px-4 py-2 rounded-2xl font-mono text-sm border-2 border-card-border-subtle disabled:opacity-50"
                 >
                   {reg ? 'adding...' : 'add key'}
                 </button>
               </div>
-              {error && <p className="text-amber-400 font-mono text-xs">{error}</p>}
+              {error && <p className="text-text-primary font-mono text-xs">{error}</p>}
             </div>
 
             <div className="space-y-2">
               {keys.length === 0 ? (
-                <p className="text-amber-300/60 font-mono text-sm">no keys registered</p>
+                <p className="text-text-muted font-mono text-sm">no keys registered</p>
               ) : (
                 keys.map((k) => (
                   <div
                     key={k.id}
-                    className="bg-zinc-900/50 border-2 border-amber-900/30 p-3 rounded-2xl flex justify-between items-center"
+                    className="bg-item-bg border-2 border-card-border-subtle p-3 rounded-2xl flex justify-between items-center"
                   >
                     <div>
-                      <p className="text-amber-200 font-mono text-sm">{k.name}</p>
-                      <p className="text-amber-300/60 font-mono text-xs">
+                      <p className="text-text-body font-mono text-sm">{k.name}</p>
+                      <p className="text-text-secondary font-mono text-xs">
                         added {new Date(k.createdAt).toLocaleDateString()}
                         {k.lastUsedAt &&
                           ` • last used ${new Date(k.lastUsedAt).toLocaleDateString()}`}
@@ -378,7 +383,7 @@ export default function Profile() {
                     </div>
                     <button
                       onClick={() => del(k.id)}
-                      className="text-amber-400 hover:text-amber-300 font-mono text-sm transition-colors"
+                      className="text-text-primary hover:text-text-body font-mono text-sm transition-colors"
                     >
                       delete
                     </button>
@@ -388,12 +393,12 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-amber-950/30">
-            <h2 className="text-amber-400 font-mono text-lg mb-4">active sessions</h2>
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 backdrop-blur-sm shadow-2xl shadow-shadow-color">
+            <h2 className="text-text-primary font-mono text-lg mb-4">active sessions</h2>
 
             <div className="space-y-3">
               {sessions.length === 0 ? (
-                <p className="text-amber-300/60 font-mono text-sm">no active sessions</p>
+                <p className="text-text-secondary font-mono text-sm">no active sessions</p>
               ) : (
                 sessions.map((s) => {
                   const created = new Date(s.createdAt)
@@ -406,11 +411,11 @@ export default function Profile() {
                   return (
                     <div
                       key={s.id}
-                      className={`bg-zinc-900/50 border-2 ${s.isCurrent ? 'border-amber-600/50' : 'border-amber-900/30'} rounded-2xl p-4 relative`}
+                      className={`bg-item-bg border-2 ${s.isCurrent ? 'border-card-border' : 'border-card-border-subtle'} rounded-2xl p-4 relative`}
                     >
                       {s.isCurrent && (
                         <div className="absolute top-2 right-2">
-                          <span className="bg-amber-900/30 text-amber-400 border border-amber-700/50 px-2 py-0.5 rounded text-xs font-mono">
+                          <span className="bg-accent-active text-text-primary border border-accent-border px-2 py-0.5 rounded text-xs font-mono">
                             current
                           </span>
                         </div>
@@ -418,10 +423,10 @@ export default function Profile() {
 
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
-                          <div className="text-amber-200 font-mono text-sm mb-1">
+                          <div className="text-text-body font-mono text-sm mb-1">
                             {s.os} @ {s.ip} $ {s.browser}
                           </div>
-                          <div className="text-amber-300/60 font-mono text-xs space-y-0.5">
+                          <div className="text-text-secondary font-mono text-xs space-y-0.5">
                             <div>logged in {created.toLocaleString()}</div>
                             <div>expires in {daysLeft} days</div>
                           </div>
@@ -430,7 +435,7 @@ export default function Profile() {
                         {!s.isCurrent && (
                           <button
                             onClick={() => kill(s.id)}
-                            className="text-amber-400 hover:text-amber-300 font-mono text-xs transition-colors ml-4"
+                            className="text-text-primary hover:text-text-body font-mono text-xs transition-colors ml-4"
                           >
                             kill
                           </button>

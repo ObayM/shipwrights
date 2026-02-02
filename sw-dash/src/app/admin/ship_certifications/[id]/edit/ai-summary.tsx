@@ -48,34 +48,34 @@ export function AiSummary({ cert }: Props) {
   const displaySummary = localSummary || cert.aiSummary
 
   return (
-    <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20 mb-4 md:mb-6">
+    <div className="bg-linear-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-6 shadow-xl shadow-shadow-color mb-4 md:mb-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-amber-400 font-mono text-sm font-bold uppercase tracking-wider">
+        <h3 className="text-text-primary font-mono text-sm font-bold uppercase tracking-wider">
           AI Summary
         </h3>
         <button
           onClick={handleGenerate}
           disabled={loading}
-          className="bg-amber-900/30 text-amber-300 px-4 py-1.5 font-mono text-xs hover:bg-amber-900/50 transition-all border border-amber-700/60 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+          className="bg-button-primary-bg text-button-primary-text px-4 py-1.5 font-mono text-xs hover:bg-button-primary-hover transition-all border border-button-primary-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
         >
           {loading ? 'generating...' : 'generate'}
         </button>
       </div>
 
       {error && (
-        <div className="text-red-400 font-mono text-xs mb-4 bg-red-950/30 p-3 rounded-xl border border-red-900/50">
+        <div className="text-role-syswright-text font-mono text-xs mb-4 bg-role-syswright-bg p-3 rounded-xl border border-role-syswright-border">
           <span className="font-bold">Error:</span> {error}
         </div>
       )}
 
       {displaySummary ? (
-        <div className="bg-zinc-950/50 border-2 border-amber-900/20 rounded-2xl p-5 shadow-inner">
-          <div className="prose prose-invert prose-sm max-w-none font-mono text-gray-300 leading-relaxed">
+        <div className="bg-input-bg border-2 border-card-border-subtle rounded-2xl p-5 shadow-inner">
+          <div className="prose prose-invert prose-sm max-w-none font-mono text-text-markdown leading-relaxed">
             <ReactMarkdown>{displaySummary}</ReactMarkdown>
           </div>
         </div>
       ) : (
-        <div className="text-gray-600 font-mono text-sm text-center py-8 border-2 border-dashed border-zinc-800 rounded-2xl">
+        <div className="text-text-muted font-mono text-sm text-center py-8 border-2 border-dashed border-card-border-subtle rounded-2xl">
           no summary generated yet...
         </div>
       )}

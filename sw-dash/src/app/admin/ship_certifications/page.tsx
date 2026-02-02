@@ -17,7 +17,7 @@ export default async function Ships() {
       <div className="w-full">
         <Link
           href="/admin"
-          className="text-amber-400 font-mono text-sm hover:text-amber-300 transition-colors mb-4 md:mb-6 inline-flex items-center gap-2"
+          className="text-text-primary font-mono text-sm hover:text-text-secondary transition-colors mb-4 md:mb-6 inline-flex items-center gap-2"
         >
           ← back
         </Link>

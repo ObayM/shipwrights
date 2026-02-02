@@ -36,55 +36,55 @@ export default async function Admin() {
         {(can(user.role, PERMS.users_view) ||
           can(user.role, PERMS.eng_full) ||
           can(user.role, PERMS.logs_full)) && (
-          <div className="mb-6 md:mb-8 max-w-2xl mx-auto">
-            <h3 className="text-amber-500/70 font-mono text-xs uppercase tracking-wider mb-3 px-2">
-              admin stuff
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-              {can(user.role, PERMS.users_view) && (
-                <Link
-                  href="/admin/users"
-                  className="bg-orange-500/10 border-2 border-dashed border-orange-500 hover:border-orange-400 text-orange-400 hover:text-orange-300 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-orange-500/20 text-center shadow-lg shadow-orange-950/20 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  🔨 manage users
-                </Link>
-              )}
+            <div className="mb-6 md:mb-8 max-w-2xl mx-auto">
+              <h3 className="text-text-secondary font-mono text-xs uppercase tracking-wider mb-3 px-2">
+                admin stuff
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                {can(user.role, PERMS.users_view) && (
+                  <Link
+                    href="/admin/users"
+                    className="bg-role-fraudster-bg border-2 border-dashed border-role-fraudster-border hover:border-role-fraudster-text text-role-fraudster-text font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-role-fraudster-border text-center hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    🔨 manage users
+                  </Link>
+                )}
 
-              {can(user.role, PERMS.logs_full) && (
-                <Link
-                  href="/admin/logs"
-                  className="bg-red-500/10 border-2 border-dashed border-red-500 hover:border-red-400 text-red-400 hover:text-red-300 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-red-500/20 text-center shadow-lg shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  📊 system logs
-                </Link>
-              )}
-              {can(user.role, PERMS.payouts_view) && (
-                <Link
-                  href="/admin/payouts"
-                  className="bg-green-500/10 border-2 border-dashed border-green-600 hover:border-green-400 text-green-400 hover:text-green-300 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-green-500/20 text-center shadow-lg shadow-green-950/20 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  🍪 payouts
-                </Link>
-              )}
+                {can(user.role, PERMS.logs_full) && (
+                  <Link
+                    href="/admin/logs"
+                    className="bg-role-syswright-bg border-2 border-dashed border-role-syswright-border hover:border-role-syswright-text text-role-syswright-text font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-role-syswright-border text-center hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    📊 system logs
+                  </Link>
+                )}
+                {can(user.role, PERMS.payouts_view) && (
+                  <Link
+                    href="/admin/payouts"
+                    className="bg-role-shipwright-bg border-2 border-dashed border-role-shipwright-border hover:border-role-shipwright-text text-role-shipwright-text font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-role-shipwright-border text-center hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    🍪 payouts
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         <div className="mb-6 md:mb-8 max-w-2xl mx-auto">
-          <h3 className="text-amber-500/70 font-mono text-xs uppercase tracking-wider mb-3 px-2">
+          <h3 className="text-text-secondary font-mono text-xs uppercase tracking-wider mb-3 px-2">
             my stuff
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <Link
               href={`/user/${user.id}`}
-              className="bg-purple-500/10 border-2 border-dashed border-purple-500 hover:border-purple-400 text-purple-400 hover:text-purple-300 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-purple-500/20 text-center shadow-lg shadow-purple-950/20 hover:scale-[1.02] active:scale-[0.98]"
+              className="bg-role-megawright-bg border-2 border-dashed border-role-megawright-border hover:border-role-megawright-text text-role-megawright-text font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-role-megawright-border text-center hover:scale-[1.02] active:scale-[0.98]"
             >
               Settings
             </Link>
             {can(user.role, PERMS.certs_edit) && (
               <Link
                 href="/admin/ship_certifications/mystats"
-                className="bg-blue-500/10 border-2 border-dashed border-blue-500 hover:border-blue-400 text-blue-400 hover:text-blue-300 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-blue-500/20 text-center shadow-lg shadow-blue-950/20 hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-role-shipwright-bg border-2 border-dashed border-role-shipwright-border hover:border-role-shipwright-text text-role-shipwright-text font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-role-shipwright-border text-center hover:scale-[1.02] active:scale-[0.98]"
               >
                 Certs Stats
               </Link>
@@ -93,7 +93,7 @@ export default async function Admin() {
         </div>
 
         <div className="mb-6 md:mb-8 max-w-2xl mx-auto">
-          <h3 className="text-amber-500/70 font-mono text-xs uppercase tracking-wider mb-3 px-2">
+          <h3 className="text-text-secondary font-mono text-xs uppercase tracking-wider mb-3 px-2">
             certifications stuff
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
@@ -101,7 +101,7 @@ export default async function Admin() {
               <div className="relative">
                 <Link
                   href="/admin/ship_certifications"
-                  className="block w-full bg-zinc-950/50 border-2 border-amber-800/40 hover:border-amber-600/60 text-amber-200 hover:text-amber-100 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-zinc-900/70 text-center shadow-lg shadow-amber-950/20 hover:scale-[1.02] active:scale-[0.98]"
+                  className="block w-full bg-item-bg border-2 border-card-border-subtle hover:border-card-border text-text-primary font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-card-bg-start text-center hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Ship Certifications
                 </Link>
@@ -116,7 +116,7 @@ export default async function Admin() {
               <div className="relative">
                 <Link
                   href="/admin/ysws_reviews"
-                  className="block w-full bg-zinc-950/50 border-2 border-amber-800/40 hover:border-amber-600/60 text-amber-200 hover:text-amber-100 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-zinc-900/70 text-center shadow-lg shadow-amber-950/20 hover:scale-[1.02] active:scale-[0.98]"
+                  className="block w-full bg-item-bg border-2 border-card-border-subtle hover:border-card-border text-text-primary font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-card-bg-start text-center hover:scale-[1.02] active:scale-[0.98]"
                 >
                   YSWS Reviews
                 </Link>
@@ -131,7 +131,7 @@ export default async function Admin() {
               <div className="relative">
                 <Link
                   href="/admin/assignments"
-                  className="block w-full bg-zinc-950/50 border-2 border-amber-800/40 hover:border-amber-600/60 text-amber-200 hover:text-amber-100 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-zinc-900/70 text-center shadow-lg shadow-amber-950/20 hover:scale-[1.02] active:scale-[0.98]"
+                  className="block w-full bg-item-bg border-2 border-card-border-subtle hover:border-card-border text-text-primary font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-card-bg-start text-center hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Assignments
                 </Link>
@@ -142,7 +142,7 @@ export default async function Admin() {
               <div className="relative">
                 <Link
                   href="/admin/tickets"
-                  className="block w-full bg-zinc-950/50 border-2 border-amber-800/40 hover:border-amber-600/60 text-amber-200 hover:text-amber-100 font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-zinc-900/70 text-center shadow-lg shadow-amber-950/20 hover:scale-[1.02] active:scale-[0.98]"
+                  className="block w-full bg-item-bg border-2 border-card-border-subtle hover:border-card-border text-text-primary font-mono text-sm px-4 md:px-6 py-3 rounded-2xl transition-all duration-200 hover:bg-card-bg-start text-center hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Support Tickets
                 </Link>

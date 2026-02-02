@@ -28,7 +28,7 @@ export function Crew() {
 
   return (
     <div className="hidden md:block fixed top-4 right-4 z-40">
-      <div className="bg-zinc-950/90 border-2 border-amber-900/40 rounded-2xl p-3 backdrop-blur-md shadow-xl shadow-amber-950/20 min-w-[140px]">
+      <div className="bg-linear-to-br from-card-bg-start to-card-bg-end border-2 border-card-border rounded-2xl p-3 backdrop-blur-md shadow-xl shadow-amber-950/20 min-w-[140px]">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-2 h-2 bg-green-500 rounded-full shadow-lg shadow-green-500/50"></div>
           <span className="text-amber-500/80 font-mono text-xs">da crew online</span>

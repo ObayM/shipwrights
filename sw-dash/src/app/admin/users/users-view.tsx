@@ -26,19 +26,19 @@ interface Props {
 const roleColor = (r: string) => {
   switch (r) {
     case 'megawright':
-      return 'text-purple-400 bg-purple-900/30 border-purple-700/50'
+      return 'text-role-megawright-text bg-role-megawright-bg border-role-megawright-border'
     case 'hq':
-      return 'text-pink-400 bg-pink-900/30 border-pink-700/50'
+      return 'text-role-hq-text bg-role-hq-bg border-role-hq-border'
     case 'captain':
-      return 'text-blue-400 bg-blue-900/30 border-blue-700/50'
+      return 'text-role-captain-text bg-role-captain-bg border-role-captain-border'
     case 'shipwright':
-      return 'text-green-400 bg-green-900/30 border-green-700/50'
+      return 'text-role-shipwright-text bg-role-shipwright-bg border-role-shipwright-border'
     case 'fraudster':
-      return 'text-orange-400 bg-orange-900/30 border-orange-700/50'
+      return 'text-role-fraudster-text bg-role-fraudster-bg border-role-fraudster-border'
     case 'syswright':
-      return 'text-red-400 bg-red-900/30 border-red-700/50'
+      return 'text-role-syswright-text bg-role-syswright-bg border-role-syswright-border'
     default:
-      return 'text-amber-300/60 bg-zinc-800 border-amber-900/30'
+      return 'text-text-muted bg-item-bg border-card-border-subtle'
   }
 }
 
@@ -60,22 +60,22 @@ export function UsersView({ users, canEdit, canAdd, myName, mySlackId }: Props) 
   return (
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-2 border-amber-900/40 rounded-2xl p-3 w-full md:w-72">
+        <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-2 border-card-border rounded-2xl p-3 w-full md:w-72">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="search name, role, id..."
-            className="w-full bg-zinc-950/50 border-2 border-amber-900/30 text-amber-200 rounded-xl p-2 font-mono text-sm focus:outline-none focus:border-amber-700 transition-colors"
+            className="w-full bg-input-bg border-2 border-card-border-subtle text-text-primary rounded-xl p-2 font-mono text-sm focus:outline-none focus:border-card-border transition-colors placeholder:text-text-muted"
           />
-          <div className="text-amber-300/40 font-mono text-xs mt-2">
+          <div className="text-text-muted font-mono text-xs mt-2">
             {filtered.length} / {users.length} shown
           </div>
         </div>
         {canAdd && (
           <button
             onClick={() => setShowAdd(true)}
-            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-mono text-sm px-6 py-3 rounded-2xl transition-all border-2 border-amber-500/50 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-amber-950/30"
+            className="bg-button-primary-bg hover:bg-button-primary-hover text-button-primary-text font-mono text-sm px-6 py-3 rounded-2xl transition-all border-2 border-button-primary-border hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-shadow-color"
           >
             + add user
           </button>
@@ -90,7 +90,7 @@ export function UsersView({ users, canEdit, canAdd, myName, mySlackId }: Props) 
       />
 
       {/* desktop */}
-      <div className="hidden lg:block bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl overflow-hidden shadow-2xl">
+      <div className="hidden lg:block bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl overflow-hidden shadow-2xl">
         <table className="w-full table-fixed">
           <colgroup>
             <col style={{ width: '5%' }} />
@@ -101,24 +101,24 @@ export function UsersView({ users, canEdit, canAdd, myName, mySlackId }: Props) 
             <col style={{ width: '15%' }} />
             <col style={{ width: '13%' }} />
           </colgroup>
-          <thead className="border-b-2 border-amber-900/40">
-            <tr className="bg-zinc-900/50">
-              <th className="text-left text-amber-400 font-mono text-sm px-4 py-3">ID</th>
-              <th className="text-left text-amber-400 font-mono text-sm px-4 py-3">USER</th>
-              <th className="text-left text-amber-400 font-mono text-sm px-4 py-3">SLACK</th>
-              <th className="text-left text-amber-400 font-mono text-sm px-4 py-3">ROLE</th>
-              <th className="text-left text-amber-400 font-mono text-sm px-4 py-3">STATUS</th>
-              <th className="text-left text-amber-400 font-mono text-sm px-4 py-3">JOINED</th>
-              <th className="text-left text-amber-400 font-mono text-sm px-4 py-3">ACTION</th>
+          <thead className="border-b-2 border-card-border">
+            <tr className="bg-item-bg">
+              <th className="text-left text-text-primary font-mono text-sm px-4 py-3">ID</th>
+              <th className="text-left text-text-primary font-mono text-sm px-4 py-3">USER</th>
+              <th className="text-left text-text-primary font-mono text-sm px-4 py-3">SLACK</th>
+              <th className="text-left text-text-primary font-mono text-sm px-4 py-3">ROLE</th>
+              <th className="text-left text-text-primary font-mono text-sm px-4 py-3">STATUS</th>
+              <th className="text-left text-text-primary font-mono text-sm px-4 py-3">JOINED</th>
+              <th className="text-left text-text-primary font-mono text-sm px-4 py-3">ACTION</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((u) => (
               <tr
                 key={u.id}
-                className="border-b border-amber-900/20 hover:bg-amber-900/10 transition-colors"
+                className="border-b border-card-border-subtle hover:bg-item-bg transition-colors"
               >
-                <td className="text-amber-300/60 font-mono text-sm px-4 py-3">#{u.id}</td>
+                <td className="text-text-secondary font-mono text-sm px-4 py-3">#{u.id}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     {u.avatar && (
@@ -130,10 +130,10 @@ export function UsersView({ users, canEdit, canAdd, myName, mySlackId }: Props) 
                         className="w-7 h-7 rounded"
                       />
                     )}
-                    <span className="text-amber-200 font-mono text-sm truncate">{u.username}</span>
+                    <span className="text-text-primary font-mono text-sm truncate">{u.username}</span>
                   </div>
                 </td>
-                <td className="text-amber-300/50 font-mono text-xs px-4 py-3">{u.slackId}</td>
+                <td className="text-text-secondary font-mono text-xs px-4 py-3">{u.slackId}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`font-mono text-xs px-2 py-1 rounded-lg border ${roleColor(u.role)}`}
@@ -143,24 +143,24 @@ export function UsersView({ users, canEdit, canAdd, myName, mySlackId }: Props) 
                 </td>
                 <td className="px-4 py-3">
                   <span
-                    className={`font-mono text-xs px-2 py-1 rounded-lg border ${u.isActive ? 'bg-green-900/30 text-green-400 border-green-700/50' : 'bg-red-900/30 text-red-400 border-red-700/50'}`}
+                    className={`font-mono text-xs px-2 py-1 rounded-lg border ${u.isActive ? 'bg-card-success-bg text-text-success-icon border-card-success-border' : 'bg-role-syswright-bg text-role-syswright-text border-role-syswright-border'}`}
                   >
                     {u.isActive ? 'active' : 'inactive'}
                   </span>
                 </td>
-                <td className="text-amber-300/50 font-mono text-sm px-4 py-3">
+                <td className="text-text-secondary font-mono text-sm px-4 py-3">
                   {new Date(u.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3">
                   {canEdit ? (
                     <Link
                       href={`/admin/users/${u.id}`}
-                      className="px-4 py-1.5 bg-amber-900/50 hover:bg-amber-900/70 border-2 border-amber-700 text-amber-200 font-mono text-xs rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      className="px-4 py-1.5 bg-input-bg hover:bg-item-bg border-2 border-card-border text-text-primary font-mono text-xs rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
                     >
                       manage
                     </Link>
                   ) : (
-                    <span className="text-amber-300/40 font-mono text-xs">-</span>
+                    <span className="text-text-muted font-mono text-xs">-</span>
                   )}
                 </td>
               </tr>
@@ -168,12 +168,12 @@ export function UsersView({ users, canEdit, canAdd, myName, mySlackId }: Props) 
           </tbody>
         </table>
         {filtered.length === 0 && search && (
-          <div className="text-center py-12 text-amber-300/50 font-mono text-sm">
+          <div className="text-center py-12 text-text-muted font-mono text-sm">
             no matches for &quot;{search}&quot;
           </div>
         )}
         {users.length === 0 && (
-          <div className="text-center py-12 text-amber-300/50 font-mono text-sm">no users yet</div>
+          <div className="text-center py-12 text-text-muted font-mono text-sm">no users yet</div>
         )}
       </div>
 
@@ -183,7 +183,7 @@ export function UsersView({ users, canEdit, canAdd, myName, mySlackId }: Props) 
           <Link
             key={u.id}
             href={canEdit ? `/admin/users/${u.id}` : '#'}
-            className={`block bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 shadow-2xl ${canEdit ? 'active:scale-[0.98] transition-transform' : ''}`}
+            className={`block bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 shadow-2xl ${canEdit ? 'active:scale-[0.98] transition-transform' : ''}`}
           >
             <div className="flex items-center gap-3 mb-3">
               {u.avatar && (
@@ -196,41 +196,41 @@ export function UsersView({ users, canEdit, canAdd, myName, mySlackId }: Props) 
                 />
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-amber-200 font-mono text-sm truncate">{u.username}</div>
-                <div className="text-amber-300/50 font-mono text-xs">#{u.id}</div>
+                <div className="text-text-primary font-mono text-sm truncate">{u.username}</div>
+                <div className="text-text-secondary font-mono text-xs">#{u.id}</div>
               </div>
               <span
-                className={`font-mono text-xs px-2 py-1 rounded-lg border ${u.isActive ? 'bg-green-900/30 text-green-400 border-green-700/50' : 'bg-red-900/30 text-red-400 border-red-700/50'}`}
+                className={`font-mono text-xs px-2 py-1 rounded-lg border ${u.isActive ? 'bg-card-success-bg text-text-success-icon border-card-success-border' : 'bg-role-syswright-bg text-role-syswright-text border-role-syswright-border'}`}
               >
                 {u.isActive ? 'active' : 'inactive'}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-zinc-900/50 border border-amber-900/30 rounded-xl p-2">
-                <div className="text-amber-300/50 font-mono text-xs mb-1">role</div>
+              <div className="bg-item-bg border border-card-border-subtle rounded-xl p-2">
+                <div className="text-text-muted font-mono text-xs mb-1">role</div>
                 <span
                   className={`font-mono text-xs px-2 py-0.5 rounded-lg border inline-block ${roleColor(u.role)}`}
                 >
                   {u.role}
                 </span>
               </div>
-              <div className="bg-zinc-900/50 border border-amber-900/30 rounded-xl p-2">
-                <div className="text-amber-300/50 font-mono text-xs mb-1">joined</div>
-                <div className="text-amber-200 font-mono text-xs">
+              <div className="bg-item-bg border border-card-border-subtle rounded-xl p-2">
+                <div className="text-text-muted font-mono text-xs mb-1">joined</div>
+                <div className="text-text-primary font-mono text-xs">
                   {new Date(u.createdAt).toLocaleDateString()}
                 </div>
               </div>
             </div>
-            <div className="mt-2 text-amber-300/40 font-mono text-xs truncate">{u.slackId}</div>
+            <div className="mt-2 text-text-secondary font-mono text-xs truncate">{u.slackId}</div>
           </Link>
         ))}
         {filtered.length === 0 && search && (
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 text-center text-amber-300/50 font-mono text-sm">
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 text-center text-text-muted font-mono text-sm">
             no matches for &quot;{search}&quot;
           </div>
         )}
         {users.length === 0 && (
-          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-6 text-center text-amber-300/50 font-mono text-sm">
+          <div className="bg-linear-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 text-center text-text-muted font-mono text-sm">
             no users yet
           </div>
         )}

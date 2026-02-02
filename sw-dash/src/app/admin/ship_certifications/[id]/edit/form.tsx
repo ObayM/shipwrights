@@ -80,7 +80,7 @@ export function Form({ shipId }: Props) {
   if (loading) {
     return (
       <main className="bg-grid min-h-screen w-full flex items-center justify-center" role="main">
-        <div className="text-amber-400 font-mono">loading...</div>
+        <div className="text-text-primary font-mono">loading...</div>
       </main>
     )
   }
@@ -88,7 +88,7 @@ export function Form({ shipId }: Props) {
   if (!cert) {
     return (
       <main className="bg-grid min-h-screen w-full flex items-center justify-center" role="main">
-        <div className="text-red-400 font-mono">ship not found</div>
+        <div className="text-role-syswright-text font-mono">ship not found</div>
       </main>
     )
   }
@@ -117,8 +117,8 @@ export function Form({ shipId }: Props) {
       }}
     >
       {dragging && (
-        <div className="fixed inset-0 bg-amber-900/80 z-50 flex items-center justify-center pointer-events-none backdrop-blur-sm">
-          <div className="text-white font-mono text-xl md:text-2xl drop-shadow-2xl">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center pointer-events-none backdrop-blur-sm">
+          <div className="text-text-primary font-mono text-xl md:text-2xl drop-shadow-2xl">
             gimme videos
           </div>
         </div>
@@ -126,13 +126,13 @@ export function Form({ shipId }: Props) {
       <div className="w-full">
         <Link
           href="/admin/ship_certifications"
-          className="text-amber-400 font-mono text-sm hover:text-amber-300 transition-colors mb-4 md:mb-6 inline-flex items-center gap-2"
+          className="text-text-primary font-mono text-sm hover:text-text-secondary transition-colors mb-4 md:mb-6 inline-flex items-center gap-2"
         >
           ← back
         </Link>
 
-        <h1 className="text-2xl md:text-4xl font-mono text-amber-400 mb-1 md:mb-2">Edit Cert</h1>
-        <h2 className="text-lg md:text-2xl font-mono text-amber-300 mb-4 md:mb-8 truncate">
+        <h1 className="text-2xl md:text-4xl font-mono text-text-primary mb-1 md:mb-2">Edit Cert</h1>
+        <h2 className="text-lg md:text-2xl font-mono text-text-secondary mb-4 md:mb-8 truncate">
           {cert.project}
         </h2>
 
@@ -140,26 +140,26 @@ export function Form({ shipId }: Props) {
           <div className="lg:col-span-2 space-y-4 md:space-y-6">
             <AiSummary cert={cert} />
 
-            <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
-              <h3 className="text-amber-400 font-mono text-sm font-bold mb-2 md:mb-3">
+            <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-6 shadow-xl shadow-shadow-color">
+              <h3 className="text-text-primary font-mono text-sm font-bold mb-2 md:mb-3">
                 Description
               </h3>
-              <div className="bg-zinc-950/50 border-2 border-amber-900/30 rounded-2xl p-4">
-                <pre className="text-gray-300 font-mono text-sm whitespace-pre-wrap">
+              <div className="bg-input-bg border-2 border-card-border-subtle rounded-2xl p-4">
+                <pre className="text-text-body font-mono text-sm whitespace-pre-wrap">
                   {cert.desc}
                 </pre>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
-              <h3 className="text-amber-400 font-mono text-sm font-bold mb-2 md:mb-3">Links</h3>
+            <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-6 shadow-xl shadow-shadow-color">
+              <h3 className="text-text-primary font-mono text-sm font-bold mb-2 md:mb-3">Links</h3>
               <div className="flex flex-wrap gap-3 md:gap-4">
                 {cert.links?.demo && (
                   <a
                     href={cert.links.demo}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-400 font-mono text-sm hover:text-amber-300 underline"
+                    className="text-text-primary font-mono text-sm hover:text-text-secondary underline"
                   >
                     Play
                   </a>
@@ -169,7 +169,7 @@ export function Form({ shipId }: Props) {
                     href={cert.links.repo}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-400 font-mono text-sm hover:text-amber-300 underline"
+                    className="text-text-primary font-mono text-sm hover:text-text-secondary underline"
                   >
                     Repo
                   </a>
@@ -179,7 +179,7 @@ export function Form({ shipId }: Props) {
                     href={cert.links.readme}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-400 font-mono text-sm hover:text-amber-300 underline"
+                    className="text-text-primary font-mono text-sm hover:text-text-secondary underline"
                   >
                     Readme
                   </a>
@@ -187,45 +187,45 @@ export function Form({ shipId }: Props) {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
-              <h3 className="text-amber-400 font-mono text-sm font-bold mb-3 md:mb-4">Decision</h3>
-              <div className="mb-2 text-gray-400 font-mono text-xs md:text-sm">
-                I <span className="text-amber-400">(approve/reject)</span>{' '}
-                <span className="text-white truncate">{cert.project}</span> cuz:
+            <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-6 shadow-xl shadow-shadow-color">
+              <h3 className="text-text-primary font-mono text-sm font-bold mb-3 md:mb-4">Decision</h3>
+              <div className="mb-2 text-text-muted font-mono text-xs md:text-sm">
+                I <span className="text-text-primary">(approve/reject)</span>{' '}
+                <span className="text-text-body truncate">{cert.project}</span> cuz:
               </div>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 disabled={isViewOnly}
-                className="w-full bg-zinc-950/50 border-2 border-amber-900/30 text-white font-mono text-sm p-3 rounded-2xl focus:outline-none focus:border-amber-600/50 min-h-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-input-bg border-2 border-card-border-subtle text-text-body font-mono text-sm p-3 rounded-2xl focus:outline-none focus:border-card-border min-h-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="enter your reasoning here..."
               />
             </div>
 
-            <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
+            <div className="bg-linear-to-br from-card-bg-start to-card-bg-end border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
               <h3 className="text-amber-400 font-mono text-sm font-bold mb-3 md:mb-4">
                 Proof Video
               </h3>
               <div className="mb-4">
                 <label className="block mb-2">
                   <div
-                    className={`bg-amber-900/20 border-2 border-dashed border-amber-700/60 rounded-2xl p-4 text-center transition-all ${uploading || isViewOnly ? 'opacity-50 cursor-not-allowed' : 'hover:border-amber-500 cursor-pointer'}`}
+                    className={`bg-bg-highlight border-4 border-dashed border-border-dashed rounded-2xl p-4 text-center transition-all ${uploading || isViewOnly ? 'opacity-50 cursor-not-allowed' : 'hover:border-card-border cursor-pointer'}`}
                     onDragOver={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
                       if (!uploading && canEdit) {
-                        e.currentTarget.classList.add('border-amber-400', 'bg-amber-900/40')
+                        e.currentTarget.classList.add('border-text-primary', 'bg-accent-active')
                       }
                     }}
                     onDragLeave={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      e.currentTarget.classList.remove('border-amber-400', 'bg-amber-900/40')
+                      e.currentTarget.classList.remove('border-text-primary', 'bg-accent-active')
                     }}
                     onDrop={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      e.currentTarget.classList.remove('border-amber-400', 'bg-amber-900/40')
+                      e.currentTarget.classList.remove('border-text-primary', 'bg-accent-active')
                       if (uploading || !canEdit) return
                       const f = e.dataTransfer.files?.[0]
                       if (f && f.type.startsWith('video/')) upload(f)
@@ -241,7 +241,7 @@ export function Form({ shipId }: Props) {
                       }}
                       disabled={uploading || isViewOnly}
                     />
-                    <span className="text-amber-400 font-mono text-sm">
+                    <span className="text-text-primary font-mono text-sm">
                       {uploading
                         ? 'uploading video...'
                         : file
@@ -251,21 +251,21 @@ export function Form({ shipId }: Props) {
                   </div>
                 </label>
                 {uploading && (
-                  <div className="mt-2 text-yellow-400 font-mono text-xs text-center">
+                  <div className="mt-2 text-badge-warn-text font-mono text-xs text-center">
                     wait for upload to finish before submitting...
                   </div>
                 )}
               </div>
               {(url || cert.proofVideo) && (
                 <div className="mb-4">
-                  <div className="text-gray-400 font-mono text-xs mb-1">
+                  <div className="text-text-muted font-mono text-xs mb-1">
                     {url ? 'New video:' : 'Current:'}
                   </div>
                   <a
                     href={url || cert.proofVideo}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-400 font-mono text-sm hover:text-amber-300 underline break-all"
+                    className="text-text-primary font-mono text-sm hover:text-text-secondary underline break-all"
                   >
                     {url || cert.proofVideo}
                   </a>
@@ -275,13 +275,13 @@ export function Form({ shipId }: Props) {
           </div>
 
           <div className="space-y-4 md:space-y-6">
-            <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
+            <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-6 shadow-xl shadow-shadow-color">
               <div className="flex justify-between items-center mb-3 md:mb-4">
-                <h3 className="text-amber-400 font-mono text-sm font-bold">Details</h3>
+                <h3 className="text-text-primary font-mono text-sm font-bold">Details</h3>
                 {user?.role && can(user.role, PERMS.certs_admin) && (
                   <button
                     onClick={() => setShow(!show)}
-                    className="bg-orange-500/10 border border-dashed border-orange-500 hover:border-orange-400 text-orange-400 hover:text-orange-300 font-mono text-xs px-2 py-1 rounded transition-all"
+                    className="bg-button-primary-bg border border-dashed border-button-primary-border hover:border-button-primary-hover text-button-primary-text hover:text-text-secondary font-mono text-xs px-2 py-1 rounded transition-all"
                   >
                     inspect ship deets
                   </button>
@@ -289,21 +289,21 @@ export function Form({ shipId }: Props) {
               </div>
               <div className="space-y-3 text-sm font-mono">
                 <div>
-                  <span className="text-gray-400">Project:</span>{' '}
+                  <span className="text-text-muted">Project:</span>{' '}
                   <a
                     href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/projects/${cert.ftId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-amber-400 hover:text-amber-300 underline"
+                    className="text-text-primary hover:text-text-secondary underline"
                   >
                     {cert.project}
                   </a>{' '}
-                  <span className="text-gray-500">(FT #{cert.ftId})</span>
+                  <span className="text-text-muted">({cert.ftId})</span>
                 </div>
                 <div>
-                  <span className="text-gray-400">Submitter:</span>{' '}
-                  <span className="text-white">{cert.submitter.username}</span>{' '}
-                  <span className="text-gray-500">({cert.submitter.slackId})</span>
+                  <span className="text-text-muted">Submitter:</span>{' '}
+                  <span className="text-text-body">{cert.submitter.username}</span>{' '}
+                  <span className="text-text-muted">({cert.submitter.slackId})</span>
                   {fraudUrls &&
                     user?.role &&
                     (can(user.role, PERMS.billy_btn) || can(user.role, PERMS.joe_btn)) && (
@@ -312,7 +312,7 @@ export function Form({ shipId }: Props) {
                           href={fraudUrls.billy}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-amber-900/40 text-amber-200 px-3 py-1.5 rounded-xl font-mono text-xs hover:bg-amber-800/50 hover:scale-[1.02] active:scale-[0.98] transition-all border-2 border-amber-900/40"
+                          className="bg-card-info-bg text-text-info-body px-3 py-1.5 rounded-xl font-mono text-xs hover:bg-card-info-bg/70 hover:scale-[1.02] active:scale-[0.98] transition-all border-2 border-card-info-border"
                         >
                           Billy
                         </a>
@@ -320,7 +320,7 @@ export function Form({ shipId }: Props) {
                           href={fraudUrls.joe}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-amber-900/40 text-amber-200 px-3 py-1.5 rounded-xl font-mono text-xs hover:bg-amber-800/50 hover:scale-[1.02] active:scale-[0.98] transition-all border-2 border-amber-900/40"
+                          className="bg-card-info-bg text-text-info-body px-3 py-1.5 rounded-xl font-mono text-xs hover:bg-card-info-bg/70 hover:scale-[1.02] active:scale-[0.98] transition-all border-2 border-card-info-border"
                         >
                           Joe
                         </a>
@@ -328,7 +328,7 @@ export function Form({ shipId }: Props) {
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">Type:</span>
+                  <span className="text-text-muted">Type:</span>
                   {user?.role && can(user.role, PERMS.certs_edit) ? (
                     <div
                       className="relative"
@@ -345,13 +345,13 @@ export function Form({ shipId }: Props) {
                           const menu = e.currentTarget.nextElementSibling as HTMLElement
                           menu.classList.toggle('hidden')
                         }}
-                        className="text-white hover:text-amber-400 cursor-pointer underline decoration-dotted"
+                        className="text-text-primary hover:text-text-secondary cursor-pointer underline decoration-dotted"
                       >
                         {cert.type || 'unknown'}
                       </button>
                       <div
                         data-menu
-                        className="hidden absolute left-0 top-6 z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl py-1 min-w-[180px]"
+                        className="hidden absolute left-0 top-6 z-50 bg-card-bg-start border border-card-border rounded-lg shadow-xl py-1 min-w-[180px]"
                       >
                         {[
                           'CLI',
@@ -371,12 +371,12 @@ export function Form({ shipId }: Props) {
                           <button
                             key={t}
                             onClick={(e) => {
-                              ;(e.currentTarget.parentElement as HTMLElement).classList.add(
+                              ; (e.currentTarget.parentElement as HTMLElement).classList.add(
                                 'hidden'
                               )
                               updateType(t)
                             }}
-                            className="block w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-zinc-800 hover:text-white"
+                            className="block w-full text-left px-3 py-1.5 text-sm text-text-body hover:bg-input-bg hover:text-text-primary"
                           >
                             {t}
                           </button>
@@ -384,16 +384,16 @@ export function Form({ shipId }: Props) {
                       </div>
                     </div>
                   ) : (
-                    <span className="text-white">{cert.type || 'unknown'}</span>
+                    <span className="text-text-body">{cert.type || 'unknown'}</span>
                   )}
                 </div>
                 <div>
-                  <span className="text-gray-400">Dev Time:</span>{' '}
-                  <span className="text-white">{cert.devTime || '-'}</span>
+                  <span className="text-text-muted">Dev Time:</span>{' '}
+                  <span className="text-text-body">{cert.devTime || '-'}</span>
                 </div>
                 {user?.role && can(user.role, PERMS.certs_bounty) && (
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-400">Bounty:</span>
+                    <span className="text-text-muted">Bounty:</span>
                     <input
                       type="number"
                       value={bounty}
@@ -401,33 +401,33 @@ export function Form({ shipId }: Props) {
                       placeholder="cookies"
                       step="0.25"
                       min="0"
-                      className="bg-zinc-950/50 border border-amber-900/30 text-white font-mono text-sm px-2 py-0.5 rounded w-24 focus:outline-none focus:border-amber-600/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="bg-input-bg border border-card-border-subtle text-text-body font-mono text-sm px-2 py-0.5 rounded w-24 focus:outline-none focus:border-card-border [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <button
                       onClick={saveBounty}
-                      className="bg-amber-900/30 text-amber-300 px-2 py-0.5 font-mono text-xs hover:bg-amber-900/50 transition-all border border-amber-700/60 rounded"
+                      className="bg-button-primary-bg text-button-primary-text px-2 py-0.5 font-mono text-xs hover:bg-button-primary-hover transition-all border border-button-primary-border rounded"
                     >
                       set
                     </button>
                   </div>
                 )}
                 <div>
-                  <span className="text-gray-400">Created:</span>{' '}
-                  <span className="text-white">{created}</span>
+                  <span className="text-text-muted">Created:</span>{' '}
+                  <span className="text-text-body">{created}</span>
                 </div>
                 <div>
-                  <span className="text-gray-400">Last Updated:</span>{' '}
-                  <span className="text-white">{updated}</span>
+                  <span className="text-text-muted">Last Updated:</span>{' '}
+                  <span className="text-text-body">{updated}</span>
                 </div>
                 {claimedBy && cert.status === 'pending' && (
-                  <div className="pt-2 mt-2 border-t border-orange-700/60">
+                  <div className="pt-2 mt-2 border-t border-card-border-subtle">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-orange-400 font-bold">
+                      <span className="text-role-fraudster-text font-bold">
                         {timeLeft && timeLeft > 0 ? '🔒 Claimed' : '⏰ Claim expired'}
                       </span>
                       {timeLeft !== null && (
                         <span
-                          className={`font-mono text-xs ${timeLeft > 0 ? 'text-orange-300' : 'text-red-400'}`}
+                          className={`font-mono text-xs ${timeLeft > 0 ? 'text-role-fraudster-text' : 'text-role-syswright-text'}`}
                         >
                           {timeLeft > 0
                             ? `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`
@@ -436,11 +436,11 @@ export function Form({ shipId }: Props) {
                       )}
                     </div>
                     <div className="text-xs">
-                      <span className="text-gray-400">by:</span>{' '}
-                      <span className="text-white">@{claimedBy}</span>
+                      <span className="text-text-muted">by:</span>{' '}
+                      <span className="text-text-body">@{claimedBy}</span>
                     </div>
                     {cert.claimedAt && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-text-muted">
                         {new Date(cert.claimedAt).toLocaleString()}
                       </div>
                     )}
@@ -448,7 +448,7 @@ export function Form({ shipId }: Props) {
                       <button
                         onClick={unclaim}
                         disabled={submitting}
-                        className="mt-2 bg-red-900/30 text-red-400 px-3 py-1 font-mono text-xs hover:bg-red-900/50 transition-all border border-red-700/60 rounded disabled:opacity-50"
+                        className="mt-2 bg-badge-warn-bg text-badge-warn-text px-3 py-1 font-mono text-xs hover:bg-badge-warn-bg/70 transition-all border border-badge-warn-border rounded disabled:opacity-50"
                       >
                         unclaim
                       </button>
@@ -456,31 +456,31 @@ export function Form({ shipId }: Props) {
                   </div>
                 )}
                 {cert.assignment && (
-                  <div className="pt-2 mt-2 border-t border-gray-700">
+                  <div className="pt-2 mt-2 border-t border-card-border-subtle">
                     <div>
-                      <span className="text-gray-400">Assigned to:</span>{' '}
+                      <span className="text-text-muted">Assigned to:</span>{' '}
                       <a
                         href={`/admin/assignments/${cert.assignment.id}/edit`}
-                        className="text-amber-400 hover:text-amber-300 underline"
+                        className="text-text-primary hover:text-text-secondary underline"
                       >
                         {cert.assignment.assignee || 'nobody'} (#{cert.assignment.id})
                       </a>
                     </div>
                     <div>
-                      <span className="text-gray-400">Status:</span>{' '}
+                      <span className="text-text-muted">Status:</span>{' '}
                       <span
                         className={
                           cert.assignment.status === 'completed'
-                            ? 'text-green-400'
+                            ? 'text-text-success-body'
                             : cert.assignment.status === 'in_progress'
-                              ? 'text-blue-400'
-                              : 'text-yellow-400'
+                              ? 'text-text-info-body'
+                              : 'text-badge-warn-text'
                         }
                       >
                         {cert.assignment.status}
                       </span>
                     </div>
-                    <div className="text-gray-600 text-xs mt-1">
+                    <div className="text-text-muted text-xs mt-1">
                       be a good boy and dont steal it
                     </div>
                   </div>
@@ -488,9 +488,9 @@ export function Form({ shipId }: Props) {
               </div>
 
               {user?.role && can(user.role, PERMS.certs_admin) && show && (
-                <div className="mt-4 pt-4 border-t-2 border-dashed border-orange-600">
-                  <div className="bg-black/80 border border-orange-600 p-3 rounded">
-                    <pre className="text-gray-300 font-mono text-xs whitespace-pre-wrap break-all">
+                <div className="mt-4 pt-4 border-t-2 border-dashed border-border-dashed">
+                  <div className="bg-input-bg border-2 border-dashed border-border-dashed p-3 rounded">
+                    <pre className="text-text-body font-mono text-xs whitespace-pre-wrap break-all">
                       {JSON.stringify(cert, null, 2)}
                     </pre>
                   </div>
@@ -498,14 +498,14 @@ export function Form({ shipId }: Props) {
               )}
             </div>
 
-            <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
-              <h3 className="text-amber-400 font-mono text-sm font-bold mb-3 md:mb-4">Notes</h3>
+            <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-6 shadow-xl shadow-shadow-color">
+              <h3 className="text-text-primary font-mono text-sm font-bold mb-3 md:mb-4">Notes</h3>
               <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
                 {cert.notes && cert.notes.length > 0 ? (
                   cert.notes.map((n) => (
                     <div
                       key={n.id}
-                      className="bg-zinc-950/50 border-2 border-amber-900/30 rounded-2xl p-3"
+                      className="bg-input-bg border-2 border-card-border-subtle rounded-2xl p-3"
                     >
                       <div className="flex items-start gap-2">
                         {n.author.avatar && (
@@ -514,29 +514,29 @@ export function Form({ shipId }: Props) {
                             alt={n.author.username}
                             width={32}
                             height={32}
-                            className="w-8 h-8 rounded-full border-2 border-amber-700/50 shadow-lg shadow-amber-900/30"
+                            className="w-8 h-8 rounded-full border-2 border-card-border shadow-lg shadow-shadow-color"
                           />
                         )}
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-1">
-                            <span className="text-amber-400 font-mono text-xs font-bold">
+                            <span className="text-text-primary font-mono text-xs font-bold">
                               {n.author.username}
                             </span>
                             <div className="flex gap-2 items-center">
-                              <span className="text-gray-500 font-mono text-xs">
+                              <span className="text-text-muted font-mono text-xs">
                                 {new Date(n.createdAt).toLocaleString()}
                               </span>
                               {user?.role && can(user.role, PERMS.certs_admin) && (
                                 <button
                                   onClick={() => del(n.id)}
-                                  className="text-red-400 hover:text-red-300 font-mono text-xs"
+                                  className="text-role-syswright-text hover:text-role-syswright-text/80 font-mono text-xs"
                                 >
                                   ✕
                                 </button>
                               )}
                             </div>
                           </div>
-                          <p className="text-gray-300 font-mono text-sm whitespace-pre-wrap break-words">
+                          <p className="text-text-body font-mono text-sm whitespace-pre-wrap break-words">
                             {fmt(n.text)}
                           </p>
                         </div>
@@ -544,7 +544,7 @@ export function Form({ shipId }: Props) {
                     </div>
                   ))
                 ) : (
-                  <div className="text-gray-500 font-mono text-sm text-center py-4">
+                  <div className="text-text-muted font-mono text-sm text-center py-4">
                     no notes...
                   </div>
                 )}
@@ -554,13 +554,13 @@ export function Form({ shipId }: Props) {
                   value={note}
                   onChange={onChange}
                   disabled={isViewOnly}
-                  className="w-full bg-zinc-950/50 border-2 border-amber-900/30 text-white font-mono text-sm p-3 rounded-2xl focus:outline-none focus:border-amber-600/50 min-h-[80px] mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-input-bg border-2 border-card-border-subtle text-text-body font-mono text-sm p-3 rounded-2xl focus:outline-none focus:border-card-border min-h-[80px] mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder={
                     isViewOnly ? 'u can only view' : 'whats on ur mind? (use @username to tag)'
                   }
                 />
                 {showPick && picks.length > 0 && (
-                  <div className="absolute z-10 w-full bg-zinc-950 border-2 border-amber-900/40 max-h-40 overflow-y-auto rounded-2xl shadow-2xl shadow-amber-950/40">
+                  <div className="absolute z-10 w-full bg-card-bg-end border-2 border-card-border max-h-40 overflow-y-auto rounded-2xl shadow-2xl shadow-shadow-color">
                     {picks
                       .filter((u) => u)
                       .map((u) => (
@@ -568,9 +568,9 @@ export function Form({ shipId }: Props) {
                           key={u.id}
                           type="button"
                           onClick={() => pick(u.username)}
-                          className="w-full text-left px-3 py-2 hover:bg-amber-950/30 text-amber-200 font-mono text-sm border-b border-amber-900/20 last:border-b-0 flex items-center gap-2 transition-colors"
+                          className="w-full text-left px-3 py-2 hover:bg-item-bg text-text-primary font-mono text-sm border-b border-card-border-subtle last:border-b-0 flex items-center gap-2 transition-colors"
                         >
-                          <div className="w-6 h-6 bg-zinc-900 border border-amber-800/50 rounded flex items-center justify-center font-mono text-xs text-amber-400 overflow-hidden flex-shrink-0">
+                          <div className="w-6 h-6 bg-input-bg border border-card-border-subtle rounded flex items-center justify-center font-mono text-xs text-text-primary overflow-hidden flex-shrink-0">
                             {u.avatar ? (
                               <Image
                                 src={u.avatar}
@@ -592,15 +592,15 @@ export function Form({ shipId }: Props) {
               <button
                 onClick={save}
                 disabled={!note.trim() || isViewOnly}
-                className="w-full bg-amber-900/30 text-amber-300 px-4 py-2 font-mono text-sm hover:bg-amber-900/50 transition-all border-2 border-amber-700/60 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-button-primary-bg text-button-primary-text px-4 py-2 font-mono text-sm hover:bg-button-primary-hover transition-all border-2 border-button-primary-border rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
               >
                 post note
               </button>
             </div>
 
             {cert.history && cert.history.length > 0 && (
-              <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
-                <h3 className="text-amber-400 font-mono text-sm font-bold mb-3 md:mb-4">
+              <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-6 shadow-xl shadow-shadow-color">
+                <h3 className="text-text-primary font-mono text-sm font-bold mb-3 md:mb-4">
                   Cert history
                 </h3>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -610,28 +610,27 @@ export function Form({ shipId }: Props) {
                       href={`/admin/ship_certifications/${h.id}/edit`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block bg-zinc-950/50 border-2 border-amber-900/30 rounded-2xl p-3 hover:border-amber-700/50 transition-colors"
+                      className="block bg-input-bg border-2 border-card-border-subtle rounded-2xl p-3 hover:border-card-border transition-colors"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`px-2 py-0.5 rounded font-mono text-xs ${
-                              h.verdict === 'approved'
-                                ? 'bg-green-900/30 text-green-400'
-                                : 'bg-red-900/30 text-red-400'
-                            }`}
+                            className={`px-2 py-0.5 rounded font-mono text-xs ${h.verdict === 'approved'
+                              ? 'bg-card-success-bg text-text-success-body'
+                              : 'bg-role-syswright-bg text-role-syswright-text'
+                              }`}
                           >
                             {h.verdict}
                           </span>
-                          <span className="text-gray-500 font-mono text-xs">#{h.id}</span>
+                          <span className="text-text-muted font-mono text-xs">#{h.id}</span>
                         </div>
-                        <span className="text-gray-500 font-mono text-xs">
+                        <span className="text-text-muted font-mono text-xs">
                           {h.completedAt ? new Date(h.completedAt).toLocaleDateString() : '-'}
                         </span>
                       </div>
-                      <div className="text-white font-mono text-xs mb-1">by {h.certifier}</div>
+                      <div className="text-text-body font-mono text-xs mb-1">by {h.certifier}</div>
                       {h.feedback && (
-                        <div className="text-gray-400 font-mono text-xs line-clamp-2">
+                        <div className="text-text-muted font-mono text-xs line-clamp-2">
                           {h.feedback}
                         </div>
                       )}
@@ -643,7 +642,7 @@ export function Form({ shipId }: Props) {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-2xl shadow-amber-950/30">
+        <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-6 shadow-2xl shadow-shadow-color">
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center">
             {cert.status === 'pending' &&
               !isMyClaim &&
@@ -652,7 +651,7 @@ export function Form({ shipId }: Props) {
                 <button
                   onClick={startReview}
                   disabled={submitting}
-                  className="bg-blue-900/30 text-blue-400 border-2 border-blue-700/60 hover:bg-blue-900/40 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-950/20 hover:scale-[1.02] active:scale-[0.98]"
+                  className="bg-card-info-bg text-text-info-body border-2 border-card-info-border hover:bg-card-info-bg/70 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-shadow-color hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Claim cert
                 </button>
@@ -668,7 +667,7 @@ export function Form({ shipId }: Props) {
                   !isMyClaim &&
                   !canOverride)
               }
-              className="bg-green-950/30 text-green-400 border-2 border-green-700/60 hover:bg-green-900/40 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-950/20 hover:scale-[1.02] active:scale-[0.98]"
+              className="bg-card-success-bg text-text-success-body border-2 border-card-success-border hover:bg-card-success-bg/70 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-shadow-color hover:scale-[1.02] active:scale-[0.98]"
             >
               Approve
             </button>
@@ -683,7 +682,7 @@ export function Form({ shipId }: Props) {
                   !isMyClaim &&
                   !canOverride)
               }
-              className="bg-red-950/30 text-red-400 border-2 border-red-700/60 hover:bg-red-900/40 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98]"
+              className="bg-role-syswright-bg text-role-syswright-text border-2 border-role-syswright-border hover:bg-role-syswright-bg/70 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-shadow-color hover:scale-[1.02] active:scale-[0.98]"
             >
               Reject
             </button>
@@ -691,7 +690,7 @@ export function Form({ shipId }: Props) {
               <button
                 onClick={() => update('pending')}
                 disabled={isViewOnly || submitting}
-                className="bg-yellow-950/30 text-yellow-400 border-2 border-yellow-700/60 hover:bg-yellow-900/40 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-950/20 hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-badge-warn-bg text-badge-warn-text border-2 border-badge-warn-border hover:bg-badge-warn-bg/70 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-shadow-color hover:scale-[1.02] active:scale-[0.98]"
               >
                 Uncert
               </button>
@@ -701,27 +700,27 @@ export function Form({ shipId }: Props) {
       </div>
 
       {err && (
-        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-6 md:max-w-sm bg-red-950/90 border-2 border-red-700/60 text-red-300 font-mono text-sm px-4 py-3 rounded-2xl shadow-2xl shadow-red-950/30 z-50">
+        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-6 md:max-w-sm bg-role-syswright-bg border-2 border-role-syswright-border text-role-syswright-text font-mono text-sm px-4 py-3 rounded-2xl shadow-2xl shadow-shadow-color z-50">
           {err}
         </div>
       )}
 
       {claimed && (
-        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-6 md:max-w-sm bg-green-950/90 border-2 border-green-700/60 text-green-300 font-mono text-sm px-4 py-3 rounded-2xl shadow-2xl shadow-green-950/30 z-50">
+        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-6 md:max-w-sm bg-card-success-bg border-2 border-card-success-border text-text-success-body font-mono text-sm px-4 py-3 rounded-2xl shadow-2xl shadow-shadow-color z-50">
           I've locked it to you for 30 min!
         </div>
       )}
 
       {bountySaved && (
-        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-6 md:max-w-sm bg-green-950/90 border-2 border-green-700/60 text-green-300 font-mono text-sm px-4 py-3 rounded-2xl shadow-2xl shadow-green-950/30 z-50">
+        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-6 md:max-w-sm bg-card-success-bg border-2 border-card-success-border text-text-success-body font-mono text-sm px-4 py-3 rounded-2xl shadow-2xl shadow-shadow-color z-50">
           bounty set!
         </div>
       )}
 
       {confirmAction && (
         <div className="fixed inset-0 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-zinc-900 to-black border-4 border-amber-900/60 rounded-3xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="text-amber-400 font-mono text-xl font-bold mb-4">
+          <div className="bg-gradient-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-6 max-w-md w-full shadow-2xl">
+            <h3 className="text-text-primary font-mono text-xl font-bold mb-4">
               {confirmAction === 'approve'
                 ? 'you sure u want to APPROVE!?!?!?!?'
                 : 'you sure u want to REJECT!?!?!?!?'}
@@ -732,17 +731,16 @@ export function Form({ shipId }: Props) {
                   update(confirmAction === 'approve' ? 'approved' : 'rejected')
                   setConfirmAction(null)
                 }}
-                className={`flex-1 font-mono text-sm px-6 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                  confirmAction === 'approve'
-                    ? 'bg-green-600 text-white border-2 border-green-500 hover:bg-green-500'
-                    : 'bg-red-600 text-white border-2 border-red-500 hover:bg-red-500'
-                }`}
+                className={`flex-1 font-mono text-sm px-6 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] ${confirmAction === 'approve'
+                  ? 'bg-card-success-bg text-text-success-body border-2 border-card-success-border hover:bg-card-success-bg/70'
+                  : 'bg-role-syswright-bg text-role-syswright-text border-2 border-role-syswright-border hover:bg-role-syswright-bg/70'
+                  }`}
               >
                 YES
               </button>
               <button
                 onClick={() => setConfirmAction(null)}
-                className="flex-1 bg-zinc-800 text-gray-300 border-2 border-zinc-700 hover:bg-zinc-700 font-mono text-sm px-6 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex-1 bg-input-bg text-text-muted border-2 border-card-border-subtle hover:bg-item-bg font-mono text-sm px-6 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 NOOOOOOOOOOOOOO
               </button>

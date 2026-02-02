@@ -15,17 +15,17 @@ interface User {
 const roleStyle = (r: string) => {
   switch (r) {
     case 'megawright':
-      return 'bg-purple-900/30 text-purple-400 border-purple-700/50'
+      return 'bg-role-megawright-bg text-role-megawright-text border-role-megawright-border'
     case 'captain':
-      return 'bg-red-900/30 text-red-400 border-red-700/50'
+      return 'bg-role-captain-bg text-role-captain-text border-role-captain-border'
     case 'shipwright':
-      return 'bg-blue-900/30 text-blue-400 border-blue-700/50'
+      return 'bg-role-shipwright-bg text-role-shipwright-text border-role-shipwright-border'
     case 'observer':
-      return 'bg-gray-900/30 text-gray-400 border-gray-700/50'
+      return 'bg-item-bg text-text-secondary border-card-border-subtle'
     case 'syswright':
-      return 'bg-green-900/30 text-green-400 border-green-700/50'
+      return 'bg-role-syswright-bg text-role-syswright-text border-role-syswright-border'
     default:
-      return 'bg-yellow-900/30 text-yellow-400 border-yellow-700/50'
+      return 'bg-badge-warn-bg text-badge-warn-text border-badge-warn-border'
   }
 }
 
@@ -39,7 +39,7 @@ export function ProfileCard({ user }: { user: User }) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-8 max-w-md mx-auto backdrop-blur-md shadow-2xl shadow-amber-950/30 relative">
+    <div className="bg-linear-to-br from-card-bg-start to-card-bg-end border-4 border-card-border rounded-3xl p-4 md:p-8 max-w-md mx-auto backdrop-blur-md shadow-2xl shadow-shadow-color relative">
       <Image
         src="/logo_nobg_notext.png"
         alt="shipso"
@@ -59,10 +59,10 @@ export function ProfileCard({ user }: { user: User }) {
           />
         )}
         <div className="flex-1 min-w-0">
-          <h2 className="text-white text-lg md:text-xl font-mono font-bold truncate mb-1">
+          <h2 className="text-text-primary text-lg md:text-xl font-mono font-bold truncate mb-1">
             {user.username}
           </h2>
-          <p className="text-amber-500/70 font-mono text-sm mb-2">shipwright legend fr</p>
+          <p className="text-text-secondary font-mono text-sm mb-2">shipwright legend fr</p>
           <div className="flex gap-2 items-center">
             <span
               className={`inline-block font-mono text-xs px-2 py-1 rounded border ${roleStyle(user.role)}`}
@@ -74,7 +74,7 @@ export function ProfileCard({ user }: { user: User }) {
       </div>
       <button
         onClick={logout}
-        className="w-full mt-4 bg-red-950/30 border-2 border-red-700/50 text-red-400 hover:bg-red-900/50 font-mono text-sm px-4 py-2 rounded-2xl transition-all hover:border-red-600 hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full mt-4 bg-role-captain-bg border-2 border-role-captain-border text-role-captain-text hover:bg-role-captain-border font-mono text-sm px-4 py-2 rounded-2xl transition-all hover:border-role-captain-text hover:scale-[1.02] active:scale-[0.98]"
       >
         logout
       </button>

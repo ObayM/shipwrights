@@ -20,25 +20,25 @@ export default function Home() {
       let cached = null
       try {
         cached = localStorage.getItem('sw_auth')
-      } catch {}
+      } catch { }
 
       try {
         const res = await fetch('/api/admin')
         if (res.ok) {
           try {
             localStorage.setItem('sw_auth', '1')
-          } catch {}
+          } catch { }
           window.location.href = `${process.env.NEXT_PUBLIC_URL}/admin`
           return
         }
         try {
           localStorage.removeItem('sw_auth')
-        } catch {}
+        } catch { }
       } catch {
         if (cached) {
           try {
             localStorage.removeItem('sw_auth')
-          } catch {}
+          } catch { }
         }
       }
       setChecking(false)
@@ -50,7 +50,7 @@ export default function Home() {
     if (errorParam) {
       try {
         localStorage.removeItem('sw_auth')
-      } catch {}
+      } catch { }
       setChecking(false)
       switch (errorParam) {
         case 'no_access_get_fucked':
@@ -139,7 +139,7 @@ export default function Home() {
       <div className="bg-grid min-h-screen w-full flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Image src="/logo_nobg_dark.png" alt="loading" width={120} height={120} priority />
-          <p className="text-amber-500/70 font-mono text-sm">checking ur session...</p>
+          <p className="text-text-secondary font-mono text-sm">checking ur session...</p>
         </div>
       </div>
     )
@@ -162,7 +162,7 @@ export default function Home() {
   return (
     <div className="bg-grid min-h-screen w-full">
       <div className="flex flex-col items-center justify-center min-h-screen px-3 md:px-4">
-        <div className="border-4 border-amber-900/40 bg-gradient-to-br from-zinc-900/90 to-black/90 backdrop-blur-md rounded-3xl p-6 md:p-10 w-full max-w-md shadow-2xl shadow-amber-950/50 relative overflow-visible">
+        <div className="border-4 border-card-border bg-linear-to-br from-card-bg-start to-card-bg-end backdrop-blur-md rounded-3xl p-6 md:p-10 w-full max-w-md shadow-2xl shadow-shadow-color relative overflow-visible">
           <div className="absolute -top-9 -right-6 md:-top-16 md:-right-16 rotate-12 animate-bounce-slow z-20">
             <Image
               src="/logo_nobg_dark.png"
@@ -179,29 +179,27 @@ export default function Home() {
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-600/5 rounded-full blur-3xl"></div>
 
           <div className="text-center mb-8 relative z-10">
-            <h1 className="text-white text-2xl md:text-3xl font-mono mb-2 tracking-tight">
+            <h1 className="text-text-primary text-2xl md:text-3xl font-mono mb-2 tracking-tight">
               Shipso Certifico
             </h1>
           </div>
 
-          <div className="flex gap-2 mb-6 bg-zinc-950/50 p-1.5 rounded-2xl border border-amber-900/20">
+          <div className="flex gap-2 mb-6 bg-[var(--input-bg)] p-1.5 rounded-2xl border border-[var(--card-border-subtle)]">
             <button
               onClick={() => setMode('slack')}
-              className={`flex-1 py-3 font-mono text-sm rounded-xl transition-all ${
-                mode === 'slack'
-                  ? 'bg-amber-600/20 text-amber-400 border border-amber-600/40 shadow-lg shadow-amber-600/20'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-zinc-900/50'
-              }`}
+              className={`flex-1 py-3 font-mono text-sm rounded-xl transition-all ${mode === 'slack'
+                ? 'bg-accent-active text-accent-text border border-accent-border shadow-lg shadow-shadow-color'
+                : 'text-text-muted hover:text-text-body hover:bg-item-bg'
+                }`}
             >
               slack
             </button>
             <button
               onClick={() => setMode('key')}
-              className={`flex-1 py-3 font-mono text-sm rounded-xl transition-all ${
-                mode === 'key'
-                  ? 'bg-amber-600/20 text-amber-400 border border-amber-600/40 shadow-lg shadow-amber-600/20'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-zinc-900/50'
-              }`}
+              className={`flex-1 py-3 font-mono text-sm rounded-xl transition-all ${mode === 'key'
+                ? 'bg-accent-active text-accent-text border border-accent-border shadow-lg shadow-shadow-color'
+                : 'text-text-muted hover:text-text-body hover:bg-item-bg'
+                }`}
             >
               yubikey
             </button>
@@ -209,8 +207,8 @@ export default function Home() {
 
           <div className="space-y-4 mb-6">
             {error && (
-              <div className="bg-red-950/30 border-2 border-red-700/50 rounded-2xl p-4 backdrop-blur-sm">
-                <p className="text-red-400 font-mono text-sm text-center">{error}</p>
+              <div className="bg-role-syswright-bg border-2 border-role-syswright-border rounded-2xl p-4 backdrop-blur-sm">
+                <p className="text-role-syswright-text font-mono text-sm text-center">{error}</p>
               </div>
             )}
 
@@ -230,7 +228,7 @@ export default function Home() {
                   onChange={(e) => setUsername(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && keyLogin()}
                   placeholder="slack username"
-                  className="w-full bg-zinc-950/50 border-2 border-amber-900/30 text-white px-5 py-4 font-mono text-sm focus:outline-none focus:border-amber-600/50 rounded-2xl placeholder:text-gray-600"
+                  className="w-full bg-input-bg border-2 border-card-border-subtle text-text-primary px-5 py-4 font-mono text-sm focus:outline-none focus:border-accent-border rounded-2xl placeholder:text-text-muted"
                   disabled={keyLoad}
                 />
                 <button
@@ -244,14 +242,14 @@ export default function Home() {
             )}
           </div>
 
-          <div className="border-t border-amber-900/20 pt-5 mt-5">
-            <p className="text-gray-500 font-mono text-[10px] md:text-xs text-center leading-relaxed">
+          <div className="border-t border-card-border-subtle pt-5 mt-5">
+            <p className="text-text-muted font-mono text-[10px] md:text-xs text-center leading-relaxed">
               Private system for{' '}
               <a
                 href={process.env.NEXT_PUBLIC_URL || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-amber-600/80 hover:text-amber-500 underline"
+                className="text-text-secondary hover:text-text-primary underline"
               >
                 Shipwrights
               </a>{' '}
@@ -260,9 +258,9 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-6 bg-zinc-950/40 backdrop-blur-sm rounded-2xl px-5 py-3 border border-amber-900/20">
+        <div className="mt-6 bg-card-bg-start backdrop-blur-sm rounded-2xl px-5 py-3 border border-card-border-subtle">
           <div className="flex items-center justify-center gap-2 text-[10px] md:text-xs font-mono text-gray-500">
-            <span className="border-2 border-dashed border-green-600/40 text-green-500/80 px-2.5 py-1 rounded-lg bg-amber-600/5">
+            <span className="border-2 border-dashed border-card-success-border text-text-success-body px-2.5 py-1 rounded-lg bg-card-success-bg">
               Production
             </span>
             <span>·</span>

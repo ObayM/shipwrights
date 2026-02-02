@@ -51,17 +51,17 @@ export function CertSearch({ onResults, onLoading, resultCount, init }: Props) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-2 border-amber-900/40 rounded-2xl p-3 w-full md:w-72 h-fit self-end">
+    <div className="bg-linear-to-br from-card-bg-start to-card-bg-end border-2 border-card-border rounded-2xl p-3 w-full md:w-72 h-fit self-end shadow-xl shadow-shadow-color">
       <input
         type="text"
         value={q}
         onChange={handleChange}
         onKeyDown={handleKey}
         placeholder="Slack ID or FT ID"
-        className="w-full bg-zinc-950/50 border-2 border-amber-900/30 text-amber-200 rounded-xl p-2 font-mono text-sm focus:outline-none focus:border-amber-700 transition-colors"
+        className="w-full bg-input-bg border-2 border-card-border-subtle text-text-primary rounded-xl p-2 font-mono text-sm focus:outline-none focus:border-card-border transition-colors placeholder:text-text-muted"
       />
       {resultCount !== null && resultCount !== undefined && (
-        <div className="text-cyan-400 font-mono text-xs mt-2">
+        <div className="text-text-info-icon font-mono text-xs mt-2">
           {resultCount} result{resultCount !== 1 ? 's' : ''}
         </div>
       )}
