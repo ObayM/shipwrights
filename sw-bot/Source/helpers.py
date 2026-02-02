@@ -1,9 +1,6 @@
 import views, db
 from collections import defaultdict
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
-
-load_dotenv()
 
 rate_limits = defaultdict(list)
 MAX_REQS = 30
