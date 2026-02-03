@@ -38,11 +38,11 @@ async function fetchCerts(filters: Filters = {}) {
     }),
   ])
 
-  type StatCert = { id: number; status: string; createdAt: Date; reviewCompletedAt: Date | null }
+  type StatCert = { id: number; status: string; createdAt: Date; reviewCompletedAt: Date | null; yswsReturnedAt: Date | null }
   let statCerts: StatCert[] = certs
   if (status && status !== 'all') {
     statCerts = await prisma.shipCert.findMany({
-      select: { id: true, status: true, createdAt: true, reviewCompletedAt: true },
+      select: { id: true, status: true, createdAt: true, reviewCompletedAt: true, yswsReturnedAt: true },
     })
   }
 
@@ -56,8 +56,51 @@ async function fetchCerts(filters: Filters = {}) {
     (c) => c.reviewCompletedAt && c.reviewCompletedAt >= today
   ).length
   const newShipsToday = statCerts.filter((c) => c.createdAt >= today).length
+  const netFlow = decisionsToday - newShipsToday
 
-  const pendingShips = statCerts.filter((c) => c.status === 'pending')
+  // Yesterday's stats for delta calculations
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  const decisionsYesterday = statCerts.filter(
+    (c) => c.reviewCompletedAt && c.reviewCompletedAt >= yesterday && c.reviewCompletedAt < today
+  ).length
+  const newShipsYesterday = statCerts.filter(
+    (c) => c.createdAt >= yesterday && c.createdAt < today
+  ).length
+  const netFlowYesterday = decisionsYesterday - newShipsYesterday
+
+  // Calculate pending count at start of today (approximate by adding today's intake and subtracting today's decisions)
+  const pendingYesterday = pending + decisionsToday - newShipsToday
+
+  // Approval rate yesterday
+  const approvedYesterday = statCerts.filter(
+    (c) => c.status === 'approved' && c.reviewCompletedAt && c.reviewCompletedAt < today
+  ).length
+  const rejectedYesterday = statCerts.filter(
+    (c) => c.status === 'rejected' && c.reviewCompletedAt && c.reviewCompletedAt < today
+  ).length
+  const totalJudgedYesterday = approvedYesterday + rejectedYesterday
+  const approvalRateYesterday = totalJudgedYesterday > 0 
+    ? Number(((approvedYesterday / totalJudgedYesterday) * 100).toFixed(1)) 
+    : 0
+
+  // Calculate percentage deltas
+  const calcDelta = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0
+    return Number((((current - previous) / previous) * 100).toFixed(1))
+  }
+
+  const deltas = {
+    pending: calcDelta(pending, pendingYesterday),
+    decisions: calcDelta(decisionsToday, decisionsYesterday),
+    intake: calcDelta(newShipsToday, newShipsYesterday),
+    netFlow: netFlow - netFlowYesterday,
+    approvalRate: Number((approvalRate - approvalRateYesterday).toFixed(1)),
+  }
+
+  // Exclude returned projects from queue time calculation
+  const pendingShips = statCerts.filter((c) => c.status === 'pending' && !c.yswsReturnedAt)
   let avgQueueTime = '-'
   if (pendingShips.length > 0) {
     const totalWait = pendingShips.reduce(
@@ -160,6 +203,8 @@ async function fetchCerts(filters: Filters = {}) {
       avgQueueTime,
       decisionsToday,
       newShipsToday,
+      netFlow,
+      deltas,
     },
     leaderboard,
     typeCounts,

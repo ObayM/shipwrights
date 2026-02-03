@@ -25,6 +25,14 @@ export interface Stats {
   avgQueueTime: string
   decisionsToday: number
   newShipsToday: number
+  netFlow: number
+  deltas: {
+    pending: number
+    decisions: number
+    intake: number
+    netFlow: number
+    approvalRate: number
+  }
 }
 
 export interface TypeCount {
