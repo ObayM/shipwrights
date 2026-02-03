@@ -94,7 +94,7 @@ export const ROLES = {
   ysws_reviewer: {
     value: 'ysws_reviewer',
     label: 'YSWS Reviewer',
-    perms: [PERMS.ysws_view, PERMS.ysws_edit],
+    perms: [PERMS.ysws_view, PERMS.ysws_edit, PERMS.certs_view],
   },
   sw_ysws: {
     value: 'sw_ysws',
