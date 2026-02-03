@@ -98,7 +98,7 @@ model LoginLog {
   username  String?
   success   Boolean
   ip        String
-  userAgent String
+  userAgent String   @db.Text
   createdAt DateTime @default(now())
 
   @@map("login_logs")
