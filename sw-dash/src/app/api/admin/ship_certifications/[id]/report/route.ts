@@ -17,8 +17,17 @@ export const POST = withParams(PERMS.certs_report)(async ({ user, req, params, i
 
   const baseUrl = process.env.NEXT_PUBLIC_FLAVORTOWN_URL
   const reportKey = process.env.FLAVORTOWN_REPORT_KEY
+  const isDev = process.env.NODE_ENV === 'development'
 
   if (!baseUrl || !reportKey) {
+    if (isDev) {
+      console.log('[MOCK] fraud report received:', { ftProjectId, details, user: user.username })
+      await syslog('fraud_report_sent', 200, user, `[MOCK] reported ${ftProjectId} to fraud squad`, {
+        ip,
+        userAgent: ua,
+      })
+      return NextResponse.json({ ok: true, mock: true })
+    }
     console.error('flavortown report config missing')
     return NextResponse.json({ error: 'report config missing' }, { status: 500 })
   }
