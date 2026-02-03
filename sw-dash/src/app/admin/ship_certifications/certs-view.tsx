@@ -58,11 +58,12 @@ interface TickerItemProps {
   isAbsolute?: boolean
   showSign?: boolean
   threshold?: number
+  tooltip?: string
 }
 
 const PENDING_THRESHOLD = 35
 
-function TickerItem({ symbol, value, delta, invertColor, isAbsolute, showSign, threshold }: TickerItemProps) {
+function TickerItem({ symbol, value, delta, invertColor, isAbsolute, showSign, threshold, tooltip }: TickerItemProps) {
   const isPositiveDelta = delta > 0
   const isNegativeDelta = delta < 0
   
@@ -93,7 +94,10 @@ function TickerItem({ symbol, value, delta, invertColor, isAbsolute, showSign, t
     : value
 
   return (
-    <div className="flex items-center gap-2 font-mono text-sm">
+    <div 
+      className="flex items-center gap-2 font-mono text-sm cursor-help"
+      title={tooltip}
+    >
       <span className="text-gray-500">{symbol}</span>
       <span className={`${valueColorClass} font-bold`}>
         {valueDisplay}
@@ -235,16 +239,17 @@ export function CertsView({ initial }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 md:mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6 md:mb-8 items-start">
         {/* Stats Ticker */}
         <div className="lg:col-span-2 bg-gradient-to-r from-zinc-900 via-black to-zinc-900 border-2 border-amber-900/40 rounded-2xl p-3 md:p-4 shadow-xl">
           <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <TickerItem
-              symbol="PENDING"
+              symbol="QUEUE"
               value={stats.pending}
               delta={stats.deltas?.pending ?? 0}
               invertColor
               threshold={PENDING_THRESHOLD}
+              tooltip="Projects waiting to be reviewed"
             />
             <span className="text-amber-900/60">│</span>
             <TickerItem
@@ -253,19 +258,22 @@ export function CertsView({ initial }: Props) {
               delta={stats.deltas?.netFlow ?? 0}
               isAbsolute
               showSign
+              tooltip="Reviewed today minus new submissions (positive = clearing backlog)"
             />
             <span className="text-amber-900/60">│</span>
             <TickerItem
-              symbol="DECISIONS"
+              symbol="REVIEWED"
               value={stats.decisionsToday}
               delta={stats.deltas?.decisions ?? 0}
+              tooltip="Projects reviewed today"
             />
             <span className="text-amber-900/60">│</span>
             <TickerItem
-              symbol="INTAKE"
+              symbol="NEW"
               value={stats.newShipsToday}
               delta={stats.deltas?.intake ?? 0}
               invertColor
+              tooltip="New project submissions today"
             />
             <span className="text-amber-900/60">│</span>
             <TickerItem
@@ -273,23 +281,36 @@ export function CertsView({ initial }: Props) {
               value={`${stats.approvalRate}%`}
               delta={stats.deltas?.approvalRate ?? 0}
               isAbsolute
+              tooltip="Percentage of projects approved (all time)"
             />
             <span className="text-amber-900/60">│</span>
-            <div className="flex items-center gap-2 font-mono text-sm">
-              <span className="text-gray-500">QUEUE</span>
+            <div className="flex items-center gap-2 font-mono text-sm" title="Average time projects spend waiting in queue">
+              <span className="text-gray-500">WAIT</span>
               <span className="text-white font-bold">{stats.avgQueueTime}</span>
             </div>
           </div>
+          {/* Legend row - hidden on mobile, shown on md+ */}
+          <div className="hidden md:flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 pt-3 border-t border-amber-900/20 text-[10px] font-mono text-gray-500">
+            <span>▲▼ vs yesterday</span>
+            <span>•</span>
+            <span>QUEUE = waiting for review</span>
+            <span>•</span>
+            <span>NET = reviewed − new</span>
+          </div>
+          {/* Mobile: simplified legend */}
+          <div className="md:hidden mt-2 pt-2 border-t border-amber-900/20 text-[10px] font-mono text-gray-500">
+            ▲▼ vs yesterday
+          </div>
           {/* Secondary stats row */}
-          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-amber-900/20 text-xs font-mono text-gray-500">
-            <span>Total Judged: <span className="text-white">{stats.totalJudged}</span></span>
-            <span>Approved: <span className="text-green-400">{stats.approved}</span></span>
-            <span>Rejected: <span className="text-red-400">{stats.rejected}</span></span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs font-mono text-gray-500">
+            <span>Total: <span className="text-white">{stats.totalJudged}</span></span>
+            <span>✓<span className="text-green-400">{stats.approved}</span></span>
+            <span>✗<span className="text-red-400">{stats.rejected}</span></span>
           </div>
         </div>
 
         {/* Leaderboard */}
-        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-2 border-amber-900/40 rounded-2xl p-3 md:p-4 shadow-xl">
+        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-2 border-amber-900/40 rounded-2xl p-3 md:p-4 shadow-xl flex flex-col">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-amber-400 font-mono text-sm">Leaderboard</h2>
             <div className="flex gap-1">
@@ -307,17 +328,25 @@ export function CertsView({ initial }: Props) {
               </button>
             </div>
           </div>
-          <div className="space-y-2 max-h-[180px] lg:max-h-none overflow-y-auto pr-1">
+          <div className="space-y-1.5 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '140px' }}>
             {leaderboard.length > 0 ? (
-              leaderboard.slice(0, 10).map((r, i) => (
-                <div key={r.name} className="flex justify-between items-center text-sm font-mono bg-zinc-900/50 rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-gray-500">{i + 1}.</span>
-                    <span className="text-white truncate">{r.name}</span>
+              leaderboard.slice(0, 10).map((r, i) => {
+                const change = r.rankChange
+                return (
+                  <div key={r.name} className="flex justify-between items-center text-xs font-mono bg-zinc-900/50 rounded-lg px-2 py-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-gray-500 w-4">{i + 1}.</span>
+                      <span className="text-white truncate">{r.name}</span>
+                      {change !== undefined && change !== 0 && (
+                        <span className={`text-[10px] ${change > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {change > 0 ? '▲' : '▼'}{Math.abs(change)}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-amber-400 tabular-nums">{r.count}</span>
                   </div>
-                  <span className="text-amber-400 tabular-nums">{r.count}</span>
-                </div>
-              ))
+                )
+              })
             ) : (
               <div className="text-gray-500 font-mono text-sm">no reviews yet...</div>
             )}

@@ -43,6 +43,7 @@ export interface TypeCount {
 export interface Reviewer {
   name: string
   count: number
+  rankChange?: number
 }
 
 export interface ShipCert {

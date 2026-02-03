@@ -129,9 +129,37 @@ async function fetchCerts(filters: Filters = {}) {
     lbWhere.reviewCompletedAt = { gte: weekStart, lt: weekEnd }
   }
 
+  // Current leaderboard
   const lbStats = await prisma.shipCert.groupBy({
     by: ['reviewerId'],
     where: lbWhere,
+    _count: true,
+  })
+
+  // Yesterday's leaderboard for rank comparison
+  let prevLbWhere: { status: { in: string[] }; reviewCompletedAt?: { gte: Date; lt: Date } } = {
+    status: { in: ['approved', 'rejected'] },
+  }
+
+  if (lbMode === 'weekly') {
+    // Compare to yesterday's snapshot of the week
+    const now = new Date()
+    const day = now.getUTCDay()
+    const weekStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day, 0, 0, 0, 0)
+    )
+    const yesterdayEnd = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0)
+    )
+    prevLbWhere.reviewCompletedAt = { gte: weekStart, lt: yesterdayEnd }
+  } else {
+    // For all-time, compare to yesterday
+    prevLbWhere.reviewCompletedAt = { gte: new Date(0), lt: yesterday }
+  }
+
+  const prevLbStats = await prisma.shipCert.groupBy({
+    by: ['reviewerId'],
+    where: prevLbWhere,
     _count: true,
   })
 
@@ -140,26 +168,57 @@ async function fetchCerts(filters: Filters = {}) {
     if (c.reviewer) reviewerMap.set(c.reviewer.id, c.reviewer.username)
   }
 
-  const missingIds = lbStats
-    .map((r) => r.reviewerId)
-    .filter((id): id is number => id !== null && !reviewerMap.has(id))
+  const allReviewerIds = [
+    ...lbStats.map((r) => r.reviewerId),
+    ...prevLbStats.map((r) => r.reviewerId),
+  ].filter((id): id is number => id !== null)
+
+  const missingIds = allReviewerIds.filter((id) => !reviewerMap.has(id))
 
   if (missingIds.length > 0) {
     const missing = await prisma.user.findMany({
-      where: { id: { in: missingIds } },
+      where: { id: { in: [...new Set(missingIds)] } },
       select: { id: true, username: true },
     })
     for (const u of missing) reviewerMap.set(u.id, u.username)
   }
 
-  const leaderboard = lbStats
+  // Build previous leaderboard rankings
+  const prevLeaderboard = prevLbStats
     .filter((r) => r.reviewerId)
     .map((r) => ({
+      id: r.reviewerId!,
       name: reviewerMap.get(r.reviewerId!) || 'unknown',
       count: r._count,
     }))
     .filter((r) => lbMode !== 'weekly' || r.name !== 'System')
     .sort((a, b) => b.count - a.count)
+
+  const prevRankMap = new Map<number, number>()
+  prevLeaderboard.forEach((r, i) => prevRankMap.set(r.id, i + 1))
+
+  // Build current leaderboard with rank changes
+  const currentLeaderboard = lbStats
+    .filter((r) => r.reviewerId)
+    .map((r) => ({
+      id: r.reviewerId!,
+      name: reviewerMap.get(r.reviewerId!) || 'unknown',
+      count: r._count,
+    }))
+    .filter((r) => lbMode !== 'weekly' || r.name !== 'System')
+    .sort((a, b) => b.count - a.count)
+
+  const leaderboard = currentLeaderboard.map((r, i) => {
+    const currentRank = i + 1
+    const prevRank = prevRankMap.get(r.id)
+    // rankChange: positive = moved up, negative = moved down
+    const rankChange = prevRank !== undefined ? prevRank - currentRank : undefined
+    return {
+      name: r.name,
+      count: r.count,
+      rankChange: rankChange === 0 ? undefined : rankChange,
+    }
+  })
 
   const typeCounts = typeGroups.map((g) => ({ type: g.projectType || 'unknown', count: g._count }))
 
@@ -218,7 +277,7 @@ export async function getCerts(filters: Filters = {}) {
     sortBy: filters.sortBy || 'newest',
     lbMode: filters.lbMode || 'weekly',
   })
-  return cache(key, 3600, () => fetchCerts(filters))
+  return cache(key, 60, () => fetchCerts(filters))
 }
 
 export async function searchCerts(q: string) {
