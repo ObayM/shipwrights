@@ -48,7 +48,7 @@ async function fetchCerts(filters: Filters = {}) {
 
   const approved = statCerts.filter((c) => c.status === 'approved').length
   const rejected = statCerts.filter((c) => c.status === 'rejected').length
-  const pending = statCerts.filter((c) => c.status === 'pending').length
+  const pending = statCerts.filter((c) => c.status === 'pending' && !c.yswsReturnedAt).length
   const totalJudged = approved + rejected
   const approvalRate = totalJudged > 0 ? Number(((approved / totalJudged) * 100).toFixed(1)) : 0
 
