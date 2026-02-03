@@ -140,7 +140,9 @@ export function Form({ shipId }: Props) {
 
         <div className="flex items-start justify-between gap-4 mb-4 md:mb-8">
           <div className="min-w-0">
-            <h1 className="text-2xl md:text-4xl font-mono text-amber-400 mb-1 md:mb-2">Edit Cert</h1>
+            <h1 className="text-2xl md:text-4xl font-mono text-amber-400 mb-1 md:mb-2">
+              Edit Cert
+            </h1>
             <h2 className="text-lg md:text-2xl font-mono text-amber-300 truncate">
               {cert.project}
             </h2>

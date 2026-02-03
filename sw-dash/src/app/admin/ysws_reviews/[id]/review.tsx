@@ -105,6 +105,8 @@ export function Review({ data, canEdit }: Props) {
   const [showReport, setShowReport] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [reportBusy, setReportBusy] = useState(false)
+  const [refreshBusy, setRefreshBusy] = useState(false)
+  const [showRefreshWarn, setShowRefreshWarn] = useState(false)
 
   const totalSecs = data.devlogs.reduce((s, d) => s + d.origSecs, 0)
   const avgSecs = data.devlogs.length > 0 ? totalSecs / data.devlogs.length : 0
@@ -172,6 +174,24 @@ export function Review({ data, canEdit }: Props) {
     }
   }
 
+  const refreshData = async () => {
+    setRefreshBusy(true)
+    setShowRefreshWarn(false)
+
+    fetch(`/api/admin/ysws_reviews/${data.id}/refresh`, {
+      method: 'POST',
+    })
+      .then((res) => {
+        if (res.ok) {
+          router.refresh()
+        }
+        setRefreshBusy(false)
+      })
+      .catch(() => {
+        setRefreshBusy(false)
+      })
+  }
+
   return (
     <div className="w-full">
       <Link
@@ -183,17 +203,28 @@ export function Review({ data, canEdit }: Props) {
 
       <div className="flex items-start justify-between gap-4 mb-4 md:mb-8">
         <div className="min-w-0">
-          <h1 className="text-2xl md:text-4xl font-mono text-amber-400 mb-1 md:mb-2">YSWS Review</h1>
+          <h1 className="text-2xl md:text-4xl font-mono text-amber-400 mb-1 md:mb-2">
+            YSWS Review
+          </h1>
           <h2 className="text-lg md:text-2xl font-mono text-amber-300 truncate">
             {data.shipCert.projectName}
           </h2>
         </div>
-        <button
-          onClick={() => setShowReport(true)}
-          className="shrink-0 bg-red-950/30 text-red-400 border-2 border-red-700/60 hover:bg-red-900/40 px-4 py-2 rounded-2xl font-mono text-sm transition-all"
-        >
-          🚩 Report to Fraud Squad!
-        </button>
+        <div className="shrink-0 flex gap-2">
+          <button
+            onClick={() => setShowRefreshWarn(true)}
+            disabled={refreshBusy}
+            className="bg-purple-950/30 text-purple-400 border-2 border-purple-700/60 hover:bg-purple-900/40 px-4 py-2 rounded-2xl font-mono text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {refreshBusy ? 'refreshing...' : 'FORCE reload Data'}
+          </button>
+          <button
+            onClick={() => setShowReport(true)}
+            className="bg-red-950/30 text-red-400 border-2 border-red-700/60 hover:bg-red-900/40 px-4 py-2 rounded-2xl font-mono text-sm transition-all"
+          >
+            🚩 Report to Fraud Squad!
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
@@ -763,6 +794,39 @@ export function Review({ data, canEdit }: Props) {
                 disabled={reportBusy || !reportReason.trim()}
               >
                 {reportBusy ? 'Submitting...' : 'Submit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRefreshWarn && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-5 max-w-lg w-full">
+            <div className="text-purple-400 font-mono text-base mb-4">listen up kid</div>
+            <div className="space-y-2 mb-5">
+              <div className="text-purple-300 font-mono text-sm">
+                this refetches ALL devlogs, commits, and media from FT + GitHub
+              </div>
+              <div className="text-purple-300 font-mono text-sm">it can take 1-5 min</div>
+              <div className="text-red-400 font-mono text-sm mt-3">
+                don't abuse ts or you're done
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowRefreshWarn(false)}
+                className="bg-zinc-800 text-gray-300 px-3 py-2 rounded font-mono text-sm hover:bg-zinc-700"
+                disabled={refreshBusy}
+              >
+                sorry i wont touch this, im scared
+              </button>
+              <button
+                onClick={refreshData}
+                className="bg-purple-600 text-white px-3 py-2 rounded font-mono text-sm hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={refreshBusy}
+              >
+                {refreshBusy ? 'refreshing data...' : 'fk u just do ts'}
               </button>
             </div>
           </div>
