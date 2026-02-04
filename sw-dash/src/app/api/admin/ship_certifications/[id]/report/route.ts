@@ -45,10 +45,16 @@ export const POST = withParams(PERMS.certs_report)(async ({ user, req, params, i
     if (!response.ok) {
       const text = await response.text()
       console.error(`fraud report failed: ${response.status} ${text}`)
-      await syslog('fraud_report_failed', response.status, user, `failed to report ${ftProjectId}`, {
-        ip,
-        userAgent: ua,
-      })
+      await syslog(
+        'fraud_report_failed',
+        response.status,
+        user,
+        `failed to report ${ftProjectId}`,
+        {
+          ip,
+          userAgent: ua,
+        }
+      )
       return NextResponse.json({ error: 'report failed' }, { status: 500 })
     }
 
