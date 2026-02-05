@@ -38,11 +38,23 @@ async function fetchCerts(filters: Filters = {}) {
     }),
   ])
 
-  type StatCert = { id: number; status: string; createdAt: Date; reviewCompletedAt: Date | null; yswsReturnedAt: Date | null }
+  type StatCert = {
+    id: number
+    status: string
+    createdAt: Date
+    reviewCompletedAt: Date | null
+    yswsReturnedAt: Date | null
+  }
   let statCerts: StatCert[] = certs
   if (status && status !== 'all') {
     statCerts = await prisma.shipCert.findMany({
-      select: { id: true, status: true, createdAt: true, reviewCompletedAt: true, yswsReturnedAt: true },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        reviewCompletedAt: true,
+        yswsReturnedAt: true,
+      },
     })
   }
 
@@ -81,9 +93,10 @@ async function fetchCerts(filters: Filters = {}) {
     (c) => c.status === 'rejected' && c.reviewCompletedAt && c.reviewCompletedAt < today
   ).length
   const totalJudgedYesterday = approvedYesterday + rejectedYesterday
-  const approvalRateYesterday = totalJudgedYesterday > 0 
-    ? Number(((approvedYesterday / totalJudgedYesterday) * 100).toFixed(1)) 
-    : 0
+  const approvalRateYesterday =
+    totalJudgedYesterday > 0
+      ? Number(((approvedYesterday / totalJudgedYesterday) * 100).toFixed(1))
+      : 0
 
   // Calculate percentage deltas
   const calcDelta = (current: number, previous: number) => {

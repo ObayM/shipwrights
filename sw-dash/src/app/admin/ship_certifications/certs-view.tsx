@@ -63,41 +63,40 @@ interface TickerItemProps {
 
 const PENDING_THRESHOLD = 35
 
-function TickerItem({ symbol, value, delta, invertColor, isAbsolute, showSign, threshold, tooltip }: TickerItemProps) {
+function TickerItem({
+  symbol,
+  value,
+  delta,
+  invertColor,
+  isAbsolute,
+  showSign,
+  threshold,
+  tooltip,
+}: TickerItemProps) {
   const isPositiveDelta = delta > 0
   const isNegativeDelta = delta < 0
-  
+
   // Determine if this change is "good" for the team
   // invertColor: for metrics where going DOWN is good (pending, intake)
   const isGood = invertColor ? isNegativeDelta : isPositiveDelta
   const isBad = invertColor ? isPositiveDelta : isNegativeDelta
-  
-  const deltaColorClass = isGood 
-    ? 'text-green-400' 
-    : isBad 
-      ? 'text-red-400' 
-      : 'text-gray-500'
-  
+
+  const deltaColorClass = isGood ? 'text-green-400' : isBad ? 'text-red-400' : 'text-gray-500'
+
   // Value color based on threshold (if provided)
   let valueColorClass = 'text-white'
   if (threshold !== undefined && typeof value === 'number') {
     valueColorClass = value > threshold ? 'text-red-400' : 'text-green-400'
   }
-  
+
   const arrow = isPositiveDelta ? '▲' : isNegativeDelta ? '▼' : ''
-  const deltaDisplay = isAbsolute 
-    ? `${delta > 0 ? '+' : ''}${delta}` 
-    : `${Math.abs(delta)}%`
-  
-  const valueDisplay = showSign && typeof value === 'number' 
-    ? `${value > 0 ? '+' : ''}${value}` 
-    : value
+  const deltaDisplay = isAbsolute ? `${delta > 0 ? '+' : ''}${delta}` : `${Math.abs(delta)}%`
+
+  const valueDisplay =
+    showSign && typeof value === 'number' ? `${value > 0 ? '+' : ''}${value}` : value
 
   return (
-    <div 
-      className="flex items-center gap-2 font-mono text-sm cursor-help"
-      title={tooltip}
-    >
+    <div className="flex items-center gap-2 font-mono text-sm cursor-help" title={tooltip}>
       <span className="text-gray-500">{symbol}</span>
       <span className={`${valueColorClass} font-bold`}>
         {valueDisplay}
@@ -107,7 +106,8 @@ function TickerItem({ symbol, value, delta, invertColor, isAbsolute, showSign, t
       </span>
       {delta !== 0 && (
         <span className={`${deltaColorClass} text-xs`}>
-          {arrow}{deltaDisplay}
+          {arrow}
+          {deltaDisplay}
         </span>
       )}
     </div>
@@ -284,7 +284,10 @@ export function CertsView({ initial }: Props) {
               tooltip="Percentage of projects approved (all time)"
             />
             <span className="text-amber-900/60">│</span>
-            <div className="flex items-center gap-2 font-mono text-sm" title="Average time projects spend waiting in queue">
+            <div
+              className="flex items-center gap-2 font-mono text-sm"
+              title="Average time projects spend waiting in queue"
+            >
               <span className="text-gray-500">WAIT</span>
               <span className="text-white font-bold">{stats.avgQueueTime}</span>
             </div>
@@ -303,9 +306,15 @@ export function CertsView({ initial }: Props) {
           </div>
           {/* Secondary stats row */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs font-mono text-gray-500">
-            <span>Total: <span className="text-white">{stats.totalJudged}</span></span>
-            <span>✓<span className="text-green-400">{stats.approved}</span></span>
-            <span>✗<span className="text-red-400">{stats.rejected}</span></span>
+            <span>
+              Total: <span className="text-white">{stats.totalJudged}</span>
+            </span>
+            <span>
+              ✓<span className="text-green-400">{stats.approved}</span>
+            </span>
+            <span>
+              ✗<span className="text-red-400">{stats.rejected}</span>
+            </span>
           </div>
         </div>
 
@@ -333,13 +342,19 @@ export function CertsView({ initial }: Props) {
               leaderboard.slice(0, 10).map((r, i) => {
                 const change = r.rankChange
                 return (
-                  <div key={r.name} className="flex justify-between items-center text-xs font-mono bg-zinc-900/50 rounded-lg px-2 py-1.5">
+                  <div
+                    key={r.name}
+                    className="flex justify-between items-center text-xs font-mono bg-zinc-900/50 rounded-lg px-2 py-1.5"
+                  >
                     <div className="flex items-center gap-1.5 min-w-0">
                       <span className="text-gray-500 w-4">{i + 1}.</span>
                       <span className="text-white truncate">{r.name}</span>
                       {change !== undefined && change !== 0 && (
-                        <span className={`text-[10px] ${change > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {change > 0 ? '▲' : '▼'}{Math.abs(change)}
+                        <span
+                          className={`text-[10px] ${change > 0 ? 'text-green-400' : 'text-red-400'}`}
+                        >
+                          {change > 0 ? '▲' : '▼'}
+                          {Math.abs(change)}
                         </span>
                       )}
                     </div>
