@@ -1,4 +1,4 @@
-import os, requests, json, logging, time
+import os, requests, json, logging
 import db, helpers
 import flask
 from flask import jsonify, request
@@ -383,6 +383,8 @@ def get_vibes():
     if not all(key in ai_response for key in ['bool', 'quote_otd', 'recommendation']):
         logger.error(f"Missing required fields. Got: {ai_response.keys()}")
         return jsonify({"error": "Missing required fields in AI response", "raw_content": content}), 500
+    logger.info("Successfully processed qualitative metrics")
+    return jsonify(ai_response), 200
 
 if __name__ == "__main__":
     try:

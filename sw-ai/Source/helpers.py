@@ -22,11 +22,15 @@ TYPES = [
 ]
 
 
-def format_messages(ticket_messages):
+def format_messages(ticket_messages, show_discussion=True):
     conversation=""
     for message in ticket_messages:
         if message.get("isStaff", False):
-            conversation += f"Shipwrights team: {message.get('msg', 'None').lstrip('?').strip()}\n"
+            if show_discussion == True:
+                conversation += f"Shipwrights team: {message.get('msg', 'None').lstrip('?').strip()}\n"
+                pass
+            if message.get('msg').startswith("?"):
+                conversation += f"Shipwrights team: {message.get('msg', 'None').lstrip('?').strip()}\n"
         else:
             conversation += f"User: {message.get('msg', 'None')}\n"
     return conversation
