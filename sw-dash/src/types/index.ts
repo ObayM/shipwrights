@@ -23,6 +23,8 @@ export interface Stats {
   pending: number
   approvalRate: number
   avgQueueTime: string
+  oldestInQueue: string
+  oldestInQueueId: number | null
   decisionsToday: number
   newShipsToday: number
   netFlow: number
@@ -33,6 +35,7 @@ export interface Stats {
     netFlow: number
     approvalRate: number
   }
+  avgWaitHistory: { date: string; avgWaitHours: number }[]
 }
 
 export interface TypeCount {
