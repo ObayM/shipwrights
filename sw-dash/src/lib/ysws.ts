@@ -68,19 +68,8 @@ async function fetchYsws(filters: Filters = {}) {
     include: {
       reviewer: { select: { id: true, username: true, avatar: true } },
       shipCert: {
-        select: {
-          id: true,
-          ftProjectId: true,
-          ftUsername: true,
-          projectName: true,
-          projectType: true,
-          demoUrl: true,
-          repoUrl: true,
-          proofVideoUrl: true,
-          devTime: true,
+        include: {
           reviewer: { select: { username: true } },
-          reviewCompletedAt: true,
-          createdAt: true,
         },
       },
     },
