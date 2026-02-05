@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Cert, Stats, TypeCount, Reviewer } from '@/types'
 import { CertSearch } from './cert-search'
+import { AvgWaitChart } from './avg-wait-chart'
 
 interface Props {
   initial: {
@@ -213,9 +214,23 @@ export function CertsView({ initial }: Props) {
               </div>
             </div>
 
+            <AvgWaitChart
+              avgQueueTime={stats.avgQueueTime}
+              history={stats.avgWaitHistory || []}
+            />
+
             <div>
-              <div className="text-gray-500 font-mono text-xs mb-1">Avg wait</div>
-              <span className="text-xl font-bold font-mono text-white">{stats.avgQueueTime}</span>
+              <div className="text-gray-500 font-mono text-xs mb-1">Oldest in queue</div>
+              {stats.oldestInQueueId !== null && stats.oldestInQueueId !== undefined ? (
+                <Link
+                  href={`/admin/ship_certifications/${stats.oldestInQueueId}/edit`}
+                  className="text-xl font-bold font-mono text-red-400 hover:text-red-300 underline"
+                >
+                  {stats.oldestInQueue}
+                </Link>
+              ) : (
+                <span className="text-xl font-bold font-mono text-white">{stats.oldestInQueue}</span>
+              )}
             </div>
 
             <div>
@@ -257,7 +272,7 @@ export function CertsView({ initial }: Props) {
               leaderboard.slice(0, 10).map((r, i) => {
                 const change = r.rankChange
                 return (
-                  <div key={r.name} className="flex justify-between items-center text-xs font-mono bg-zinc-900/50 rounded-lg px-2 py-1.5">
+                  <div key={`${r.name}-${i}`} className="flex justify-between items-center text-xs font-mono bg-zinc-900/50 rounded-lg px-2 py-1.5">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <span className="text-gray-500 w-4">{i + 1}.</span>
                       <span className="text-white truncate">{r.name}</span>

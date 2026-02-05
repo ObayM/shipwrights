@@ -1,18 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { can, PERMS } from '@/lib/perms'
 import { useShipCert } from '@/hooks/useShipCert'
 import { AiSummary } from './ai-summary'
-import {
-  APPROVAL_TAGS,
-  REJECTION_TAGS,
-  FEEDBACK_CHECKLIST,
-  SUGGESTED_NEXT_STEPS,
-  type AuditTag,
-} from '@/lib/feedback-snippets'
 
 interface Props {
   shipId: string
@@ -72,77 +65,6 @@ export function Form({ shipId }: Props) {
 
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | null>(null)
-  const [feedbackMode, setFeedbackMode] = useState<'approve' | 'reject'>('approve')
-  const [nextSteps, setNextSteps] = useState<string[]>(['', ''])
-  const [showStepSuggestions, setShowStepSuggestions] = useState(false)
-  
-  // Audit tags - internal only, not sent to users
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  
-  const auditTags = feedbackMode === 'approve' ? APPROVAL_TAGS : REJECTION_TAGS
-  const checklist = FEEDBACK_CHECKLIST[feedbackMode]
-
-  const toggleTag = (tagId: string) => {
-    if (isViewOnly) return
-    setSelectedTags(prev => 
-      prev.includes(tagId) 
-        ? prev.filter(id => id !== tagId)
-        : [...prev, tagId]
-    )
-  }
-
-  const isTagSelected = (tagId: string) => selectedTags.includes(tagId)
-
-  const updateStep = (index: number, value: string) => {
-    setNextSteps((prev) => prev.map((s, i) => (i === index ? value : s)))
-  }
-
-  const addStep = () => {
-    setNextSteps((prev) => [...prev, ''])
-  }
-
-  const removeStep = (index: number) => {
-    if (nextSteps.length <= 2) return
-    setNextSteps((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const addSuggestedStep = (step: string) => {
-    const emptyIndex = nextSteps.findIndex((s) => s.trim() === '')
-    if (emptyIndex >= 0) {
-      updateStep(emptyIndex, step)
-    } else {
-      setNextSteps((prev) => [...prev, step])
-    }
-    setShowStepSuggestions(false)
-  }
-
-  // Validation
-  const filledSteps = nextSteps.filter((s) => s.trim().length > 0)
-  const isStepsValid = feedbackMode === 'approve' || filledSteps.length >= 2
-  const isReasonValid = reason.trim().length >= (feedbackMode === 'approve' ? 50 : 100)
-
-  // Combine all fields into final feedback before submission
-  const buildFinalFeedback = () => {
-    let feedback = reason.trim()
-    
-    // Add next steps for rejections
-    if (feedbackMode === 'reject' && filledSteps.length > 0) {
-      feedback += '\n\nNext steps to get approved:\n'
-      filledSteps.forEach((step) => {
-        feedback += `• ${step}\n`
-      })
-    }
-    
-    return feedback.trim()
-  }
-
-  const handleSubmitDecision = (verdict: string) => {
-    // Combine fields into reason before update
-    const finalFeedback = buildFinalFeedback()
-    setReason(finalFeedback)
-    // Small delay to ensure state updates before update() reads it
-    setTimeout(() => update(verdict), 50)
-  }
 
   useEffect(() => {
     if (!cert?.claimedAt) {
@@ -288,161 +210,17 @@ export function Form({ shipId }: Props) {
 
             <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
               <h3 className="text-amber-400 font-mono text-sm font-bold mb-3 md:mb-4">Decision</h3>
-              
-              <div className="flex gap-2 mb-4">
-                <button
-                  onClick={() => setFeedbackMode('approve')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-mono text-sm font-bold transition-all border-2 ${
-                    feedbackMode === 'approve'
-                      ? 'bg-green-900/40 text-green-400 border-green-600'
-                      : 'bg-zinc-900/50 text-gray-500 border-zinc-700 hover:text-gray-300 hover:border-zinc-600'
-                  }`}
-                >
-                  ✅ Approving
-                </button>
-                <button
-                  onClick={() => setFeedbackMode('reject')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-mono text-sm font-bold transition-all border-2 ${
-                    feedbackMode === 'reject'
-                      ? 'bg-red-900/40 text-red-400 border-red-600'
-                      : 'bg-zinc-900/50 text-gray-500 border-zinc-700 hover:text-gray-300 hover:border-zinc-600'
-                  }`}
-                >
-                  ❌ Rejecting
-                </button>
-              </div>
-
-              {/* Next Steps - Required for Rejections */}
-              {feedbackMode === 'reject' && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-gray-400 font-mono text-xs">Next steps for them</span>
-                    <span className="text-red-400 font-mono text-xs">*2+ required</span>
-                    {isStepsValid && <span className="text-green-400 font-mono text-xs">✓</span>}
-                  </div>
-                  <div className="space-y-2">
-                    {nextSteps.map((step, i) => (
-                      <div key={i} className="flex gap-2">
-                        <span className="text-gray-500 font-mono text-sm mt-2">•</span>
-                        <input
-                          type="text"
-                          value={step}
-                          onChange={(e) => updateStep(i, e.target.value)}
-                          disabled={isViewOnly}
-                          className="flex-1 bg-zinc-950/50 border-2 border-amber-900/30 text-white font-mono text-sm p-2 rounded-lg focus:outline-none focus:border-amber-600/50 disabled:opacity-50"
-                          placeholder={`Step ${i + 1}: what should they fix?`}
-                        />
-                        {nextSteps.length > 2 && (
-                          <button
-                            onClick={() => removeStep(i)}
-                            className="text-gray-500 hover:text-red-400 font-mono text-sm px-2"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={addStep}
-                      disabled={isViewOnly}
-                      className="text-amber-400 hover:text-amber-300 font-mono text-xs disabled:opacity-50"
-                    >
-                      + Add step
-                    </button>
-                    <div className="relative">
-                      <button
-                        onClick={() => setShowStepSuggestions(!showStepSuggestions)}
-                        className="text-gray-400 hover:text-gray-300 font-mono text-xs"
-                      >
-                        💡 Suggestions
-                      </button>
-                      {showStepSuggestions && (
-                        <div className="absolute z-20 left-0 mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl p-2 w-72">
-                          {SUGGESTED_NEXT_STEPS.map((step, i) => (
-                            <button
-                              key={i}
-                              onClick={() => addSuggestedStep(step)}
-                              className="block w-full text-left text-gray-300 hover:text-white hover:bg-zinc-800 font-mono text-xs p-2 rounded"
-                            >
-                              {step}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Audit Tags - Internal only */}
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-gray-400 font-mono text-xs">🏷️ Audit tags</span>
-                  <span className="text-gray-600 font-mono text-[10px]">(internal only — not sent to user)</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {auditTags.map((tag) => {
-                    const selected = isTagSelected(tag.id)
-                    return (
-                      <button
-                        key={tag.id}
-                        onClick={() => toggleTag(tag.id)}
-                        disabled={isViewOnly}
-                        className={`px-2 py-1 rounded-lg font-mono text-xs transition-all border disabled:opacity-50 disabled:cursor-not-allowed ${
-                          selected
-                            ? tag.category === 'positive'
-                              ? 'bg-green-900/50 text-green-300 border-green-600'
-                              : tag.category === 'negative'
-                                ? 'bg-red-900/50 text-red-300 border-red-600'
-                                : 'bg-amber-900/50 text-amber-300 border-amber-600'
-                            : 'bg-zinc-800/50 hover:bg-zinc-700/50 text-gray-400 hover:text-white border-zinc-700/50 hover:border-zinc-600'
-                        }`}
-                      >
-                        {selected ? '✓ ' : ''}{tag.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Main Feedback Textarea */}
               <div className="mb-2 text-gray-400 font-mono text-xs md:text-sm">
-                Your feedback to the submitter:
+                I <span className="text-amber-400">(approve/reject)</span>{' '}
+                <span className="text-white truncate">{cert.project}</span> cuz:
               </div>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 disabled={isViewOnly}
-                className={`w-full bg-zinc-950/50 border-2 text-white font-mono text-sm p-3 rounded-2xl focus:outline-none focus:border-amber-600/50 min-h-[100px] disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isReasonValid ? 'border-green-800/50' : 'border-amber-900/30'
-                }`}
-                placeholder={feedbackMode === 'approve' 
-                  ? "What did you like? Any suggestions for their next project?" 
-                  : "Explain the issue clearly. Be encouraging - they can resubmit!"
-                }
+                className="w-full bg-zinc-950/50 border-2 border-amber-900/30 text-white font-mono text-sm p-3 rounded-2xl focus:outline-none focus:border-amber-600/50 min-h-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="enter your reasoning here..."
               />
-              <div className="flex justify-between text-xs font-mono mt-1">
-                <span className={reason.length >= (feedbackMode === 'approve' ? 50 : 100) ? 'text-green-400' : 'text-gray-500'}>
-                  {reason.length} chars (min {feedbackMode === 'approve' ? 50 : 100})
-                </span>
-                {isReasonValid && <span className="text-green-400">✓</span>}
-              </div>
-
-              <div className="mt-3 bg-zinc-950/30 border border-zinc-800 rounded-xl p-3">
-                <div className="text-gray-500 font-mono text-xs mb-2">
-                  📋 Good {feedbackMode === 'approve' ? 'approval' : 'rejection'} feedback:
-                </div>
-                <ul className="space-y-1">
-                  {checklist.map((item, i) => (
-                    <li key={i} className="text-gray-400 font-mono text-xs flex items-start gap-2">
-                      <span className="text-zinc-600">•</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
             </div>
 
             <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl shadow-amber-950/20">
@@ -901,14 +679,10 @@ export function Form({ shipId }: Props) {
                 </button>
               )}
             <button
-              onClick={() => {
-                setFeedbackMode('approve')
-                setConfirmAction('approve')
-              }}
+              onClick={() => setConfirmAction('approve')}
               disabled={
                 isViewOnly ||
                 submitting ||
-                !isReasonValid ||
                 (claimedBy !== null &&
                   timeLeft !== null &&
                   timeLeft > 0 &&
@@ -917,18 +691,13 @@ export function Form({ shipId }: Props) {
               }
               className="bg-green-950/30 text-green-400 border-2 border-green-700/60 hover:bg-green-900/40 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-950/20 hover:scale-[1.02] active:scale-[0.98]"
             >
-              Approve {!isReasonValid && '(need feedback)'}
+              Approve
             </button>
             <button
-              onClick={() => {
-                setFeedbackMode('reject')
-                setConfirmAction('reject')
-              }}
+              onClick={() => setConfirmAction('reject')}
               disabled={
                 isViewOnly ||
                 submitting ||
-                !isReasonValid ||
-                (feedbackMode === 'reject' && !isStepsValid) ||
                 (claimedBy !== null &&
                   timeLeft !== null &&
                   timeLeft > 0 &&
@@ -937,7 +706,7 @@ export function Form({ shipId }: Props) {
               }
               className="bg-red-950/30 text-red-400 border-2 border-red-700/60 hover:bg-red-900/40 font-mono text-sm px-4 md:px-8 py-3 rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98]"
             >
-              Reject {!isReasonValid ? '(need feedback)' : feedbackMode === 'reject' && !isStepsValid ? '(need 2+ steps)' : ''}
+              Reject
             </button>
             {(cert.status === 'approved' || cert.status === 'rejected') && (
               <button
@@ -981,7 +750,7 @@ export function Form({ shipId }: Props) {
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  handleSubmitDecision(confirmAction === 'approve' ? 'approved' : 'rejected')
+                  update(confirmAction === 'approve' ? 'approved' : 'rejected')
                   setConfirmAction(null)
                 }}
                 className={`flex-1 font-mono text-sm px-6 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] ${

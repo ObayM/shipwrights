@@ -8,84 +8,150 @@ interface Filters {
   lbMode?: string
 }
 
-async function fetchCerts(filters: Filters = {}) {
-  const { type, status, sortBy = 'newest' } = filters
+type StatsRow = {
+  approved: bigint
+  rejected: bigint
+  pending: bigint
+  decisionsToday: bigint
+  newShipsToday: bigint
+  decisionsYesterday: bigint
+  newShipsYesterday: bigint
+  approvedBeforeToday: bigint
+  rejectedBeforeToday: bigint
+  queueCount: bigint
+  queueOldestId: number | null
+  queueOldestCreatedAt: Date | null
+  avgWaitSeconds: number | null
+}
 
+type LeaderRow = {
+  reviewerId: number
+  username: string | null
+  currentCount: bigint
+  prevCount: bigint
+}
+
+type TypeGroup = {
+  projectType: string | null
+  _count: number
+}
+
+function fmtDuration(seconds: number): string {
+  const days = Math.floor(seconds / (60 * 60 * 24))
+  const hours = Math.floor((seconds % (60 * 60 * 24)) / (60 * 60))
+  return `${days}d ${hours}h`
+}
+
+// Fetch stats separately - cached independently of sortBy
+async function fetchStats(lbMode: string) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const now = new Date()
-  const thirtyMinsAgo = new Date(now.getTime() - 30 * 60 * 1000)
 
-  const where: { projectType?: string; status?: string } = {}
-  if (type && type !== 'all') where.projectType = type
-  if (status && status !== 'all') where.status = status
-
-  const orderBy = { createdAt: sortBy === 'oldest' ? 'asc' : 'desc' } as const
-
-  const [certs, typeGroups] = await Promise.all([
-    prisma.shipCert.findMany({
-      where,
-      orderBy,
-      include: {
-        reviewer: { select: { id: true, username: true, avatar: true } },
-        claimer: { select: { id: true, username: true } },
-      },
-    }),
-    prisma.shipCert.groupBy({
-      by: ['projectType'],
-      where: status && status !== 'all' ? { status } : {},
-      _count: true,
-    }),
-  ])
-
-  type StatCert = { id: number; status: string; createdAt: Date; reviewCompletedAt: Date | null; yswsReturnedAt: Date | null }
-  let statCerts: StatCert[] = certs
-  if (status && status !== 'all') {
-    statCerts = await prisma.shipCert.findMany({
-      select: { id: true, status: true, createdAt: true, reviewCompletedAt: true, yswsReturnedAt: true },
-    })
-  }
-
-  const approved = statCerts.filter((c) => c.status === 'approved').length
-  const rejected = statCerts.filter((c) => c.status === 'rejected').length
-  const pending = statCerts.filter((c) => c.status === 'pending').length
-  const totalJudged = approved + rejected
-  const approvalRate = totalJudged > 0 ? Number(((approved / totalJudged) * 100).toFixed(1)) : 0
-
-  const decisionsToday = statCerts.filter(
-    (c) => c.reviewCompletedAt && c.reviewCompletedAt >= today
-  ).length
-  const newShipsToday = statCerts.filter((c) => c.createdAt >= today).length
-  const netFlow = decisionsToday - newShipsToday
-
-  // Yesterday's stats for delta calculations
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
 
-  const decisionsYesterday = statCerts.filter(
-    (c) => c.reviewCompletedAt && c.reviewCompletedAt >= yesterday && c.reviewCompletedAt < today
-  ).length
-  const newShipsYesterday = statCerts.filter(
-    (c) => c.createdAt >= yesterday && c.createdAt < today
-  ).length
-  const netFlowYesterday = decisionsYesterday - newShipsYesterday
+  // Leaderboard date windows
+  let weekStart: Date | null = null
+  let weekEnd: Date | null = null
+  let yesterdayEndUTC: Date | null = null
 
-  // Calculate pending count at start of today (approximate by adding today's intake and subtracting today's decisions)
+  if (lbMode === 'weekly') {
+    const n = new Date()
+    const day = n.getUTCDay()
+    weekStart = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() - day, 0, 0, 0, 0))
+    weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+    yesterdayEndUTC = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), 0, 0, 0, 0))
+  }
+
+  const [historyRows, statsRows, leaderRows] = await Promise.all([
+    // Historical avg wait (last 14 days) - for trend chart
+    prisma.$queryRaw<{ date: Date; avgWaitSeconds: number }[]>`
+      SELECT 
+        DATE(reviewCompletedAt) as date,
+        AVG(TIMESTAMPDIFF(SECOND, createdAt, reviewCompletedAt)) as avgWaitSeconds
+      FROM ship_certs
+      WHERE reviewCompletedAt >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+        AND status IN ('approved', 'rejected')
+      GROUP BY DATE(reviewCompletedAt)
+      ORDER BY date ASC
+    `,
+
+    // Stats + queue in ONE SQL query
+    prisma.$queryRaw<StatsRow[]>`
+      SELECT
+        SUM(status = 'approved') AS approved,
+        SUM(status = 'rejected') AS rejected,
+        SUM(status = 'pending') AS pending,
+        SUM(reviewCompletedAt IS NOT NULL AND reviewCompletedAt >= ${today}) AS decisionsToday,
+        SUM(createdAt >= ${today}) AS newShipsToday,
+        SUM(reviewCompletedAt IS NOT NULL AND reviewCompletedAt >= ${yesterday} AND reviewCompletedAt < ${today}) AS decisionsYesterday,
+        SUM(createdAt >= ${yesterday} AND createdAt < ${today}) AS newShipsYesterday,
+        SUM(status = 'approved' AND reviewCompletedAt IS NOT NULL AND reviewCompletedAt < ${today}) AS approvedBeforeToday,
+        SUM(status = 'rejected' AND reviewCompletedAt IS NOT NULL AND reviewCompletedAt < ${today}) AS rejectedBeforeToday,
+        (SELECT COUNT(*) FROM ship_certs WHERE status = 'pending' AND yswsReturnedAt IS NULL) AS queueCount,
+        (SELECT id FROM ship_certs WHERE status = 'pending' AND yswsReturnedAt IS NULL ORDER BY createdAt ASC LIMIT 1) AS queueOldestId,
+        (SELECT MIN(createdAt) FROM ship_certs WHERE status = 'pending' AND yswsReturnedAt IS NULL) AS queueOldestCreatedAt,
+        (SELECT AVG(TIMESTAMPDIFF(SECOND, createdAt, ${now})) FROM ship_certs WHERE status = 'pending' AND yswsReturnedAt IS NULL) AS avgWaitSeconds
+      FROM ship_certs
+    `,
+
+    // Leaderboard with usernames + rank comparison in ONE query
+    lbMode === 'weekly'
+      ? prisma.$queryRaw<LeaderRow[]>`
+          SELECT
+            sc.reviewerId AS reviewerId,
+            u.username AS username,
+            SUM(CASE WHEN sc.reviewCompletedAt >= ${weekStart} AND sc.reviewCompletedAt < ${weekEnd} THEN 1 ELSE 0 END) AS currentCount,
+            SUM(CASE WHEN sc.reviewCompletedAt >= ${weekStart} AND sc.reviewCompletedAt < ${yesterdayEndUTC} THEN 1 ELSE 0 END) AS prevCount
+          FROM ship_certs sc
+          LEFT JOIN users u ON u.id = sc.reviewerId
+          WHERE sc.reviewerId IS NOT NULL
+            AND sc.status IN ('approved', 'rejected')
+            AND sc.reviewCompletedAt >= ${weekStart}
+            AND sc.reviewCompletedAt < ${weekEnd}
+          GROUP BY sc.reviewerId, u.username
+        `
+      : prisma.$queryRaw<LeaderRow[]>`
+          SELECT
+            sc.reviewerId AS reviewerId,
+            u.username AS username,
+            COUNT(*) AS currentCount,
+            SUM(CASE WHEN sc.reviewCompletedAt < ${yesterday} THEN 1 ELSE 0 END) AS prevCount
+          FROM ship_certs sc
+          LEFT JOIN users u ON u.id = sc.reviewerId
+          WHERE sc.reviewerId IS NOT NULL
+            AND sc.status IN ('approved', 'rejected')
+            AND sc.reviewCompletedAt IS NOT NULL
+          GROUP BY sc.reviewerId, u.username
+        `,
+  ])
+
+  // Process stats
+  const statsRow = statsRows[0]
+  const toNum = (val: bigint | null | undefined) => Number(val ?? 0)
+  const approved = toNum(statsRow?.approved)
+  const rejected = toNum(statsRow?.rejected)
+  const pending = toNum(statsRow?.pending)
+  const totalJudged = approved + rejected
+  const approvalRate = totalJudged > 0 ? Number(((approved / totalJudged) * 100).toFixed(1)) : 0
+
+  const decisionsToday = toNum(statsRow?.decisionsToday)
+  const newShipsToday = toNum(statsRow?.newShipsToday)
+  const netFlow = decisionsToday - newShipsToday
+
+  const decisionsYesterday = toNum(statsRow?.decisionsYesterday)
+  const newShipsYesterday = toNum(statsRow?.newShipsYesterday)
+  const netFlowYesterday = decisionsYesterday - newShipsYesterday
   const pendingYesterday = pending + decisionsToday - newShipsToday
 
-  // Approval rate yesterday
-  const approvedYesterday = statCerts.filter(
-    (c) => c.status === 'approved' && c.reviewCompletedAt && c.reviewCompletedAt < today
-  ).length
-  const rejectedYesterday = statCerts.filter(
-    (c) => c.status === 'rejected' && c.reviewCompletedAt && c.reviewCompletedAt < today
-  ).length
-  const totalJudgedYesterday = approvedYesterday + rejectedYesterday
-  const approvalRateYesterday = totalJudgedYesterday > 0 
-    ? Number(((approvedYesterday / totalJudgedYesterday) * 100).toFixed(1)) 
+  const approvedBeforeToday = toNum(statsRow?.approvedBeforeToday)
+  const rejectedBeforeToday = toNum(statsRow?.rejectedBeforeToday)
+  const totalJudgedYesterday = approvedBeforeToday + rejectedBeforeToday
+  const approvalRateYesterday = totalJudgedYesterday > 0
+    ? Number(((approvedBeforeToday / totalJudgedYesterday) * 100).toFixed(1))
     : 0
 
-  // Calculate percentage deltas
   const calcDelta = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0
     return Number((((current - previous) / previous) * 100).toFixed(1))
@@ -99,119 +165,42 @@ async function fetchCerts(filters: Filters = {}) {
     approvalRate: Number((approvalRate - approvalRateYesterday).toFixed(1)),
   }
 
-  // Exclude returned projects from queue time calculation
-  const pendingShips = statCerts.filter((c) => c.status === 'pending' && !c.yswsReturnedAt)
+  // Queue stats
+  const queueCount = toNum(statsRow?.queueCount)
   let avgQueueTime = '-'
-  if (pendingShips.length > 0) {
-    const totalWait = pendingShips.reduce(
-      (sum, s) => sum + (now.getTime() - s.createdAt.getTime()),
-      0
-    )
-    const avgMs = totalWait / pendingShips.length
-    const days = Math.floor(avgMs / (1000 * 60 * 60 * 24))
-    const hours = Math.floor((avgMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    avgQueueTime = `${days}d ${hours}h`
+  let oldestInQueue = '-'
+  const oldestInQueueId: number | null = statsRow?.queueOldestId ?? null
+
+  if (queueCount > 0) {
+    const avgWaitSeconds = statsRow?.avgWaitSeconds
+    if (avgWaitSeconds != null) avgQueueTime = fmtDuration(avgWaitSeconds)
+
+    const oldestCreatedAt = statsRow?.queueOldestCreatedAt
+    if (oldestCreatedAt) {
+      const oldestSeconds = Math.floor((now.getTime() - oldestCreatedAt.getTime()) / 1000)
+      oldestInQueue = fmtDuration(oldestSeconds)
+    }
   }
 
-  const lbMode = filters.lbMode || 'weekly'
+  // Build leaderboard
+  const norm = (x: bigint | null | undefined) => Number(x ?? 0)
 
-  let lbWhere: { status: { in: string[] }; reviewCompletedAt?: { gte: Date; lt: Date } } = {
-    status: { in: ['approved', 'rejected'] },
-  }
-
-  if (lbMode === 'weekly') {
-    const now = new Date()
-    const day = now.getUTCDay()
-    const weekStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day, 0, 0, 0, 0)
-    )
-    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
-    lbWhere.reviewCompletedAt = { gte: weekStart, lt: weekEnd }
-  }
-
-  // Current leaderboard
-  const lbStats = await prisma.shipCert.groupBy({
-    by: ['reviewerId'],
-    where: lbWhere,
-    _count: true,
-  })
-
-  // Yesterday's leaderboard for rank comparison
-  let prevLbWhere: { status: { in: string[] }; reviewCompletedAt?: { gte: Date; lt: Date } } = {
-    status: { in: ['approved', 'rejected'] },
-  }
-
-  if (lbMode === 'weekly') {
-    // Compare to yesterday's snapshot of the week
-    const now = new Date()
-    const day = now.getUTCDay()
-    const weekStart = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day, 0, 0, 0, 0)
-    )
-    const yesterdayEnd = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0)
-    )
-    prevLbWhere.reviewCompletedAt = { gte: weekStart, lt: yesterdayEnd }
-  } else {
-    // For all-time, compare to yesterday
-    prevLbWhere.reviewCompletedAt = { gte: new Date(0), lt: yesterday }
-  }
-
-  const prevLbStats = await prisma.shipCert.groupBy({
-    by: ['reviewerId'],
-    where: prevLbWhere,
-    _count: true,
-  })
-
-  const reviewerMap = new Map<number, string>()
-  for (const c of certs) {
-    if (c.reviewer) reviewerMap.set(c.reviewer.id, c.reviewer.username)
-  }
-
-  const allReviewerIds = [
-    ...lbStats.map((r) => r.reviewerId),
-    ...prevLbStats.map((r) => r.reviewerId),
-  ].filter((id): id is number => id !== null)
-
-  const missingIds = allReviewerIds.filter((id) => !reviewerMap.has(id))
-
-  if (missingIds.length > 0) {
-    const missing = await prisma.user.findMany({
-      where: { id: { in: [...new Set(missingIds)] } },
-      select: { id: true, username: true },
-    })
-    for (const u of missing) reviewerMap.set(u.id, u.username)
-  }
-
-  // Build previous leaderboard rankings
-  const prevLeaderboard = prevLbStats
-    .filter((r) => r.reviewerId)
-    .map((r) => ({
-      id: r.reviewerId!,
-      name: reviewerMap.get(r.reviewerId!) || 'unknown',
-      count: r._count,
-    }))
+  const prevLeaderboard = leaderRows
+    .map((r) => ({ id: r.reviewerId, name: r.username || 'unknown', count: norm(r.prevCount) }))
     .filter((r) => lbMode !== 'weekly' || r.name !== 'System')
     .sort((a, b) => b.count - a.count)
 
   const prevRankMap = new Map<number, number>()
   prevLeaderboard.forEach((r, i) => prevRankMap.set(r.id, i + 1))
 
-  // Build current leaderboard with rank changes
-  const currentLeaderboard = lbStats
-    .filter((r) => r.reviewerId)
-    .map((r) => ({
-      id: r.reviewerId!,
-      name: reviewerMap.get(r.reviewerId!) || 'unknown',
-      count: r._count,
-    }))
+  const currentLeaderboard = leaderRows
+    .map((r) => ({ id: r.reviewerId, name: r.username || 'unknown', count: norm(r.currentCount) }))
     .filter((r) => lbMode !== 'weekly' || r.name !== 'System')
     .sort((a, b) => b.count - a.count)
 
   const leaderboard = currentLeaderboard.map((r, i) => {
     const currentRank = i + 1
     const prevRank = prevRankMap.get(r.id)
-    // rankChange: positive = moved up, negative = moved down
     const rankChange = prevRank !== undefined ? prevRank - currentRank : undefined
     return {
       name: r.name,
@@ -219,6 +208,75 @@ async function fetchCerts(filters: Filters = {}) {
       rankChange: rankChange === 0 ? undefined : rankChange,
     }
   })
+
+  // Format history for chart
+  const avgWaitHistory = historyRows.map((r) => ({
+    date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date),
+    avgWaitHours: r.avgWaitSeconds ? Math.round(Number(r.avgWaitSeconds) / 3600) : 0,
+  }))
+
+  return {
+    stats: {
+      totalJudged,
+      approved,
+      rejected,
+      pending,
+      approvalRate,
+      avgQueueTime,
+      oldestInQueue,
+      oldestInQueueId,
+      decisionsToday,
+      newShipsToday,
+      netFlow,
+      deltas,
+      avgWaitHistory,
+    },
+    leaderboard,
+  }
+}
+
+// Fetch list and type counts - cached with sortBy
+async function fetchList(filters: Filters) {
+  const { type, status, sortBy = 'newest' } = filters
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000)
+
+  const where: { projectType?: string; status?: string } = {}
+  if (type && type !== 'all') where.projectType = type
+  if (status && status !== 'all') where.status = status
+
+  const orderBy = { createdAt: sortBy === 'oldest' ? 'asc' : 'desc' } as const
+
+  const [certs, typeGroups] = await Promise.all([
+    prisma.shipCert.findMany({
+      where,
+      orderBy,
+      select: {
+        id: true,
+        ftProjectId: true,
+        projectName: true,
+        projectType: true,
+        status: true,
+        createdAt: true,
+        devTime: true,
+        ftUsername: true,
+        syncedToFt: true,
+        reviewStartedAt: true,
+        claimerId: true,
+        yswsReturnedAt: true,
+        yswsReturnReason: true,
+        yswsReturnedBy: true,
+        customBounty: true,
+        reviewer: { select: { id: true, username: true, avatar: true } },
+        claimer: { select: { id: true, username: true } },
+      },
+    }),
+
+    prisma.shipCert.groupBy({
+      by: ['projectType'],
+      where: status && status !== 'all' ? { status } : {},
+      _count: true,
+    }),
+  ])
 
   const typeCounts = typeGroups.map((g) => ({ type: g.projectType || 'unknown', count: g._count }))
 
@@ -253,42 +311,66 @@ async function fetchCerts(filters: Filters = {}) {
         customBounty: c.customBounty,
       }
     }),
-    stats: {
-      totalJudged,
-      approved,
-      rejected,
-      pending,
-      approvalRate,
-      avgQueueTime,
-      decisionsToday,
-      newShipsToday,
-      netFlow,
-      deltas,
-    },
-    leaderboard,
     typeCounts,
   }
 }
 
-export async function getCerts(filters: Filters = {}) {
-  const key = genKey('certs', {
+// Cached stats fetcher - independent of sortBy
+async function getStats(lbMode: string) {
+  const key = genKey('certs-stats', { lbMode })
+  return cache(key, 15, () => fetchStats(lbMode))
+}
+
+// Cached list fetcher - includes sortBy
+async function getList(filters: Filters) {
+  const key = genKey('certs-list', {
     type: filters.type || null,
     status: filters.status || null,
     sortBy: filters.sortBy || 'newest',
-    lbMode: filters.lbMode || 'weekly',
   })
-  return cache(key, 60, () => fetchCerts(filters))
+  return cache(key, 15, () => fetchList(filters))
+}
+
+export async function getCerts(filters: Filters = {}) {
+  const lbMode = filters.lbMode || 'weekly'
+
+  // Fetch stats and list in parallel with separate caches
+  const [statsData, listData] = await Promise.all([
+    getStats(lbMode),
+    getList(filters),
+  ])
+
+  return {
+    certifications: listData.certifications,
+    stats: statsData.stats,
+    leaderboard: statsData.leaderboard,
+    typeCounts: listData.typeCounts,
+  }
 }
 
 export async function searchCerts(q: string) {
-  const now = new Date()
-  const thirtyMinsAgo = new Date(now.getTime() - 30 * 60 * 1000)
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000)
 
   const certs = await prisma.shipCert.findMany({
     where: {
       OR: [{ ftProjectId: q }, { ftSlackId: q }],
     },
-    include: {
+    select: {
+      id: true,
+      ftProjectId: true,
+      projectName: true,
+      projectType: true,
+      status: true,
+      createdAt: true,
+      devTime: true,
+      ftUsername: true,
+      syncedToFt: true,
+      reviewStartedAt: true,
+      claimerId: true,
+      yswsReturnedAt: true,
+      yswsReturnReason: true,
+      yswsReturnedBy: true,
+      customBounty: true,
       reviewer: { select: { id: true, username: true, avatar: true } },
       claimer: { select: { id: true, username: true } },
     },

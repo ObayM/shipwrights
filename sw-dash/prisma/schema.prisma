@@ -186,6 +186,11 @@ model ShipCert {
   @@index([status])
   @@index([ftSlackId])
   @@index([projectType])
+  @@index([ftProjectId])
+  @@index([status, createdAt])
+  @@index([status, projectType])
+  @@index([status, yswsReturnedAt, createdAt])
+  @@index([status, reviewCompletedAt, reviewerId])
   @@map("ship_certs")
 }
 
