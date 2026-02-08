@@ -36,6 +36,8 @@ model User {
 
   cookieBalance   Float        @default(0)
   cookiesEarned   Float        @default(0)
+  streak          Int          @default(0)
+  lastReviewDate  DateTime?    @db.Date
   payoutReqs      PayoutReq[]  @relation("PayoutReqs")
   payoutApprovals PayoutReq[]  @relation("PayoutApprovals")
   yswsReviews     YswsReview[] @relation("YswsReviewer")
@@ -149,6 +151,7 @@ model ShipCert {
   ftProjectId String?
   ftSlackId   String?
   ftUsername  String?
+  ftType      String?
 
   projectName String?
   projectType String?
@@ -187,6 +190,11 @@ model ShipCert {
   @@index([status])
   @@index([ftSlackId])
   @@index([projectType])
+  @@index([ftProjectId])
+  @@index([status, createdAt])
+  @@index([status, projectType])
+  @@index([status, yswsReturnedAt, createdAt])
+  @@index([status, reviewCompletedAt, reviewerId])
   @@map("ship_certs")
 }
 
@@ -202,7 +210,7 @@ model YswsReview {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  shipCert ShipCert @relation(fields: [shipCertId], references: [id])
+  shipCert ShipCert @relation(fields: [shipCertId], references: [id], onDelete: Cascade)
   reviewer User?    @relation("YswsReviewer", fields: [reviewerId], references: [id])
 
   @@index([shipCertId])

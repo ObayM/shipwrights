@@ -3,6 +3,7 @@ export interface Cert {
   ftProjectId: string | null
   project: string | null
   type: string
+  ftType: string | null
   verdict: string
   certifier: string
   createdAt: string
@@ -23,6 +24,8 @@ export interface Stats {
   pending: number
   approvalRate: number
   avgQueueTime: string
+  oldestInQueue: string
+  oldestInQueueId: number | null
   decisionsToday: number
   newShipsToday: number
   netFlow: number
@@ -33,6 +36,7 @@ export interface Stats {
     netFlow: number
     approvalRate: number
   }
+  avgWaitHistory: { date: string; avgWaitHours: number }[]
 }
 
 export interface TypeCount {
@@ -44,6 +48,7 @@ export interface Reviewer {
   name: string
   count: number
   rankChange?: number
+  streak?: number
 }
 
 export interface ShipCert {
