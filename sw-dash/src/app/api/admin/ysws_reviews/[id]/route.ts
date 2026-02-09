@@ -83,8 +83,8 @@ export const PATCH = yswsApiWithParams(PERMS.ysws_edit)(async ({ user, req, para
       `${action}d ysws #${yswsId}`,
       { ip, userAgent: ua }
     )
-    await bust('cache:ysws:*')
-    await bust('cache:certs:*')
+    bust('cache:ysws:*')
+    bust('cache:certs:*')
     return NextResponse.json({ ok: true })
   }
 
