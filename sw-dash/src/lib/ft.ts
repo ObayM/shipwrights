@@ -32,6 +32,8 @@ async function getProj(ftProjectId: string) {
     })
 
     if (!projectRes.ok) {
+      if (projectRes.status === 404) return null
+
       const txt = await projectRes.text()
       await syslog(
         'ft_project_fetch_fail',
