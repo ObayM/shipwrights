@@ -1,7 +1,7 @@
 import json, requests, tempfile, time, os
 import db, ai
 from globals import STAFF_CHANNEL, USER_CHANNEL, BOT_TOKEN, DASH_URL, PORT, MACROS, client
-
+from cache import cache
 
 def send_files(event, dest_channel, dest_ts):
     files = event.get("files") or []
@@ -242,6 +242,14 @@ def handle_staff_reply(event):
                 name="checks-passed-octicon"
             )
 
+    elif text.strip().lower().split(' ')[0] in ["!tldr", "!ai"] and not cache.get_user_opt_in(ticket["userId"]):
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text="User has opted out of AI use."
+        )
+        return
+
     elif text.strip().lower().startswith('!tldr'):
         ai.summarize_ticket(ticket["id"])
 
@@ -384,7 +392,7 @@ def create_ticket(event):
     user_id = event["user"]
     text = event.get("text", "")
     files = event.get("files", [])
-
+    user_opt_in = cache.get_user_opt_in(user_id)
     if not text and not files:
         return
 
@@ -487,7 +495,28 @@ def create_ticket(event):
                 },
             ]
         )
-        ai.detect_ticket(ticket_id)
+        client.chat_postEphemeral(
+            channel=USER_CHANNEL,
+            thread_ts=event["ts"],
+            text="AI Notice.",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn",
+                             "text": "*Hey There!*\nIt looks like you're currently *opted into* _Ticket AI_.\nWe use AI to improve your ticket experience and to give faster responses.\n_This is *optional* but may result in *longer* wait times if you decide to opt out._" if user_opt_in else "*Hey There!*\nIt looks like you're currently *opted out* of _Ticket AI_.\nWe use AI to improve your ticket experience and to give *faster* responses.\n_This is *optional* but may result in shorter wait times if you decide to opt in._"},
+                    "accessory": {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "Opt Out" if user_opt_in else "Opt In"},
+                        "style": "primary",
+                        "value": json.dumps({"opt":'0' if user_opt_in else '1', "thread_ts":str(event["ts"])}),
+                        "action_id": "modify_opt"
+                    }
+                },
+            ],
+            user=user_id,
+        )
+        if user_opt_in:
+            ai.detect_ticket(ticket_id)
 
 def edit_message(event):
     message_ts = event.get("previous_message").get("ts")

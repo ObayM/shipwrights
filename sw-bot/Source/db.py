@@ -461,3 +461,57 @@ def open_ticket(ticket_id):
     finally:
         cursor.close()
         db.close()
+
+def get_ticket_user(user_id):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM ticket_users WHERE userId = %s", (user_id,))
+        row = cursor.fetchone()
+        return row if row else None
+    except Exception as e:
+        print(f"couldn't get ticket user info: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def create_ticket_user(user_id):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO ticket_users (userId, isOptedIn) VALUES (%s, %s)",
+            (user_id, True)
+        )
+        db.commit()
+        return cursor.lastrowid
+    except Exception as e:
+        print(f"couldn't create ticket user: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def update_ticket_user_opt(user_id, state: bool):
+    db = get_db()
+    if not db:
+        return False
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "UPDATE ticket_users SET isOptedIn = %s WHERE userId = %s",
+            (state, user_id)
+        )
+        db.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        print(f"couldn't update ticket user opt in: {e}")
+        return False
+    finally:
+        cursor.close()
+        db.close()

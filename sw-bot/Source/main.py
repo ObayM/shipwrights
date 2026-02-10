@@ -4,6 +4,7 @@ from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from summary import send_reminder
 from globals import BOT_TOKEN, USER_CHANNEL, STAFF_CHANNEL
+from cache import cache
 
 
 slack_app = App(token=BOT_TOKEN, signing_secret=os.getenv("SLACK_SIGNING_SECRET"), process_before_response=True)
@@ -104,6 +105,19 @@ def edit_message(ack, body, client):
     message_ts = payload["ts"]
     helpers.show_edit_modal(client, body, message_ts)
 
+@slack_app.action("modify_opt")
+def modify_opt(ack, body, client):
+    ack()
+    payload = json.loads(body["actions"][0]["value"])
+    user_id = body["user"]["id"]
+    cache.modify_user_opt(user_id, int(payload["opt"]))
+    client.chat_postEphemeral(
+        text=f"Successfully {'opted in!' if payload == '1' else 'opted out!'}",
+        thread_ts=payload["thread_ts"],
+        channel=USER_CHANNEL,
+        user=user_id,
+    )
+
 @slack_app.action("resolve_detected")
 def resolve_detected(ack, body, client):
     ack()
@@ -176,7 +190,8 @@ def resolve_ticket(ack, body, client):
             timestamp=ticket["userThreadTs"],
             name="checks-passed-octicon"
         )
-        ai.summarize_ticket(ticket_id)
+        if cache.get_user_opt_in(ticket["userId"]):
+            ai.summarize_ticket(ticket_id)
 
     elif (user_id == ticket["userId"] and not helpers.is_shipwright(user_id)) and ticket["status"] == "open":
         db.close_ticket(ticket_id)
@@ -200,7 +215,8 @@ def resolve_ticket(ack, body, client):
             timestamp=ticket["userThreadTs"],
             name="checks-passed-octicon"
         )
-        ai.summarize_ticket(ticket_id)
+        if cache.get_user_opt_in(ticket["userId"]):
+            ai.summarize_ticket(ticket_id)
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
