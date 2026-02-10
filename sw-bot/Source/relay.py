@@ -62,7 +62,7 @@ def handle_staff_reply(event):
     if not thread:
         return
 
-    ticket = db.find_ticket(thread)
+    ticket = cache.find_ticket_by_ts(thread)
     if not ticket:
         return
 
@@ -220,7 +220,7 @@ def handle_staff_reply(event):
                     }
                 ]
             )
-            db.close_ticket(ticket["id"])
+            cache.close_ticket(ticket["id"])
             client.chat_postMessage(
                 channel=STAFF_CHANNEL,
                 thread_ts=ticket["staffThreadTs"],
@@ -258,7 +258,7 @@ def handle_staff_reply(event):
         ai.paraphrase_message(ticket["id"], clean_text)
 
     elif text.strip().lower().startswith('!reopen'):
-        db.open_ticket(ticket["id"])
+        cache.open_ticket(ticket["id"])
         client.chat_postMessage(
             channel=USER_CHANNEL,
             thread_ts=ticket["userThreadTs"],
@@ -284,7 +284,7 @@ def handle_staff_reply(event):
     elif text.strip().lower().startswith('!resolve'):
         if ticket["status"] != "open":
             return
-        db.close_ticket(ticket["id"])
+        cache.close_ticket(ticket["id"])
         db.claim_ticket(ticket["id"], user_id)
         try:
             client.reactions_add(
@@ -339,7 +339,7 @@ def handle_client_reply(event):
     if not text and not files:
         return True
 
-    ticket = db.find_ticket(event["thread_ts"])
+    ticket = cache.find_ticket_by_ts(event["thread_ts"])
     if ticket and ticket.get("status", None) != "closed":
         user_info = client.users_info(user=user_id)
         user_name = user_info["user"]["profile"].get("display_name") or user_info["user"]["profile"].get(
@@ -521,7 +521,7 @@ def create_ticket(event):
 def edit_message(event):
     message_ts = event.get("previous_message").get("ts")
     message = event.get("message").get("text")
-    ticket = db.find_ticket(message_ts)
+    ticket = cache.find_ticket_by_ts(message_ts)
     if message == 'This message was deleted.':
         client.chat_postMessage(
             channel=STAFF_CHANNEL,

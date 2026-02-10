@@ -2,6 +2,7 @@ import requests, json
 import db
 from datetime import datetime, timedelta
 from globals import SWAI_KEY, MACROS, STAFF_CHANNEL,client
+from cache import cache
 
 CACHED_METRICS = {
     "cached_at": None,
@@ -20,7 +21,7 @@ def get_ticket_summery(ticket_id):
 
 def summarize_ticket(ticket_id):
     summary = get_ticket_summery(ticket_id)
-    ticket = db.get_ticket(ticket_id)
+    ticket = cache.get_ticket_by_id(ticket_id)
     client.chat_postMessage(
         channel=STAFF_CHANNEL,
         thread_ts=ticket['staffThreadTs'],
@@ -72,7 +73,7 @@ def get_message_completion(ticket_id, message):
 
 def paraphrase_message(ticket_id, message):
     paraphrased = get_message_completion(ticket_id=ticket_id, message=message).get('paraphrased')
-    ticket = db.get_ticket(ticket_id)
+    ticket = cache.get_ticket_by_id(ticket_id)
     client.chat_postMessage(
         channel=STAFF_CHANNEL,
         thread_ts=ticket['staffThreadTs'],
@@ -116,7 +117,7 @@ def get_ticket_detection(ticket_id):
 
 def detect_ticket(ticket_id):
     detection = get_ticket_detection(ticket_id)
-    ticket = db.get_ticket(ticket_id)
+    ticket = cache.get_ticket_by_id(ticket_id)
     if detection not in MACROS.keys():
         return
     client.chat_postMessage(
