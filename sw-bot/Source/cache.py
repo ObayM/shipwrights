@@ -7,6 +7,13 @@ class Cache:
         self.tickets = {}
         self.shipwrights = []
         self.ignorable = []
+        self.metrics = {
+            "cached_at": None,
+            "quote_otd": None,
+            "recommendation" : None,
+            "bool" : None,
+            "paused" : False,
+        }
 
     def get_user_opt_in(self, user_id):
         if user_id not in self.ticket_users.keys():
@@ -108,7 +115,9 @@ class Cache:
                 return ticket_data["closedBy"]
             else:
                 print(f"URGENT: Something went wrong. Someone tried checking if a ticket is claimed and that ticket simply doesn't exist in cache nor db... Ticket ID:{ticket_id}, Cache Dump:{json.dumps(self.tickets)}")
-
+                print("URGENT: Killing ticket cache...")
+                self.tickets = {}
+                return None
     def get_shipwrights(self):
         if self.shipwrights:
             return self.shipwrights

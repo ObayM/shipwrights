@@ -1,16 +1,8 @@
 import requests, json
-import db
 from datetime import datetime, timedelta
 from globals import SWAI_KEY, MACROS, STAFF_CHANNEL,client
 from cache import cache
 
-CACHED_METRICS = {
-    "cached_at": None,
-    "quote_otd": None,
-    "recommendation" : None,
-    "bool" : None,
-    "paused" : False,
-}
 
 def get_ticket_summery(ticket_id):
     return json.loads(requests.get(
@@ -177,19 +169,19 @@ def detect_ticket(ticket_id):
     )
 
 def get_metrics():
-    if CACHED_METRICS["paused"]:
-        return CACHED_METRICS
-    if not CACHED_METRICS.get("cached_at") or (datetime.now() - CACHED_METRICS["cached_at"] > timedelta(hours=2)):
-        CACHED_METRICS["paused"] = True
+    if cache.metrics["paused"]:
+        return cache.metrics
+    if not cache.metrics.get("cached_at") or (datetime.now() - cache.metrics["cached_at"] > timedelta(hours=2)):
+        cache.metrics["paused"] = True
         metrics = json.loads(requests.get(
             url="https://ai.review.hackclub.com/metrics/qualitative",
             headers={"X-API-Key": SWAI_KEY},
             json={}
         ).text)
-        CACHED_METRICS["cached_at"] = datetime.now()
-        CACHED_METRICS["quote_otd"] = metrics.get("quote_otd")
-        CACHED_METRICS["recommendation"] = metrics.get("recommendation")
-        CACHED_METRICS["bool"] = metrics.get("bool")
-        CACHED_METRICS["paused"] = False
+        cache.metrics["cached_at"] = datetime.now()
+        cache.metrics["quote_otd"] = metrics.get("quote_otd")
+        cache.metrics["recommendation"] = metrics.get("recommendation")
+        cache.metrics["bool"] = metrics.get("bool")
+        cache.metrics["paused"] = False
         return metrics
-    return CACHED_METRICS
+    return cache.metrics
