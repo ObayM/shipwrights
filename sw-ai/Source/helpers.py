@@ -406,8 +406,10 @@ def format_vibes_message(tickets):
 2. Pick 2-3 user quotes (copy exactly, not from staff)
 3. One improvement suggestion (not about response times - we're volunteers)
 
-## Note
-Staff messages with '?' prefix were sent to users. Others are internal - ignore them.
+## Important Rules
+- Only reference staff messages prefixed with '?' (these were sent to the user). Messages without '?' are internal discussions and should NOT be mentioned.
+- Do NOT provide recommendations about delays or response times. We are a volunteer team.
+- The quote must be from a USER, not from staff.
 
 ## Tickets
 {ticket_data}
