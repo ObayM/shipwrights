@@ -384,9 +384,11 @@ def get_vibes():
         logger.error(f"Missing required fields. Got: {ai_response.keys()}")
         return jsonify({"error": "Missing required fields in AI response", "raw_content": content}), 500
     logger.info("Successfully processed qualitative metrics")
-    for quote in enumerate(ai_response["quotes"]):
-        thread = db.get_ticket_ts(ai_response["quotes"][quote][0]["ticket_id"])
-        ai_response["quotes"][quote][0]["link"] = "https://hackclub.slack.com/archives/C099P9FQQ91/p" + thread[:10] + thread[11:]
+    for i, quote in enumerate(ai_response["quotes"]):
+        ticket_id = quote["ticket_id"].lstrip("#")
+        thread = db.get_ticket_ts(ticket_id)
+        if thread:
+            ai_response["quotes"][i]["link"] = "https://hackclub.slack.com/archives/C099P9FQQ91/p" + thread[:10] + thread[11:]
 
     return jsonify(ai_response), 200
 
