@@ -14,9 +14,9 @@ export const POST = withParams<Record<string, never>>(PERMS.spot_check)(async ({
     const { action, ...data } = await req.json()
 
     if (action === 'start') {
-      const { wrightId } = data
+      const { wrightId, count: batchCount = 1 } = data
 
-      const count = await prisma.shipCert.count({
+      const total = await prisma.shipCert.count({
         where: {
           reviewerId: wrightId,
           status: { in: ['approved', 'rejected'] },
@@ -24,23 +24,30 @@ export const POST = withParams<Record<string, never>>(PERMS.spot_check)(async ({
         },
       })
 
-      if (count === 0) return NextResponse.json({ cert: null })
+      if (total === 0) return NextResponse.json({ certs: [] })
 
-      const skip = Math.floor(Math.random() * count)
-      const cert = await prisma.shipCert.findFirst({
-        where: {
-          reviewerId: wrightId,
-          status: { in: ['approved', 'rejected'] },
-          spotChecked: false,
-        },
-        skip,
-        include: {
-          reviewer: { select: { username: true, avatar: true } },
-          assignments: { select: { demoUrl: true, repoUrl: true, description: true } },
-        },
-      })
+      const actualCount = Math.min(batchCount, total)
+      const certs: any[] = []
 
-      return NextResponse.json({ cert })
+      for (let i = 0; i < actualCount; i++) {
+        const skip = Math.floor(Math.random() * (total - i))
+        const cert = await prisma.shipCert.findFirst({
+          where: {
+            reviewerId: wrightId,
+            status: { in: ['approved', 'rejected'] },
+            spotChecked: false,
+            id: { notIn: certs.map((c) => c.id) },
+          },
+          skip,
+          include: {
+            reviewer: { select: { username: true, avatar: true } },
+            assignments: { select: { demoUrl: true, repoUrl: true, description: true } },
+          },
+        })
+        if (cert) certs.push(cert)
+      }
+
+      return NextResponse.json({ certs })
     }
 
     if (action === 'decide') {

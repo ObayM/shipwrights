@@ -1,27 +1,39 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 
 export default function Review({ wrightId }: { wrightId: string }) {
-  const [cert, setCert] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [showSetup, setShowSetup] = useState(true)
+  const [totalCount, setTotalCount] = useState('')
+  const [addOnReject, setAddOnReject] = useState('')
+
+  const [certs, setCerts] = useState<any[]>([])
+  const [idx, setIdx] = useState(0)
+  const [loading, setLoading] = useState(false)
   const [showReject, setShowReject] = useState(false)
 
   const [why, setWhy] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const load = async () => {
+  const start = async () => {
+    const n = parseInt(totalCount)
+    if (!n || n < 1) {
+      alert('gotta enter a valid number')
+      return
+    }
+
     setLoading(true)
     try {
       const res = await fetch('/api/admin/spot_checks/actions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', wrightId: Number(wrightId) }),
+        body: JSON.stringify({ action: 'start', wrightId: Number(wrightId), count: n }),
       })
       const data = await res.json()
-      setCert(data.cert || null)
+      setCerts(data.certs || [])
+      setShowSetup(false)
     } catch (e) {
       alert('load failed')
     } finally {
@@ -29,11 +41,8 @@ export default function Review({ wrightId }: { wrightId: string }) {
     }
   }
 
-  useEffect(() => {
-    load()
-  }, [wrightId])
-
   const approve = async () => {
+    const cert = certs[idx]
     if (!cert) return
 
     setSubmitting(true)
@@ -48,7 +57,7 @@ export default function Review({ wrightId }: { wrightId: string }) {
           wrightId: Number(wrightId),
         }),
       })
-      load()
+      next()
     } catch (e) {
       alert('approve failed')
     } finally {
@@ -57,6 +66,7 @@ export default function Review({ wrightId }: { wrightId: string }) {
   }
 
   const reject = async () => {
+    const cert = certs[idx]
     if (!cert || !why) return
 
     setSubmitting(true)
@@ -74,16 +84,90 @@ export default function Review({ wrightId }: { wrightId: string }) {
         }),
       })
 
+      const add = parseInt(addOnReject)
+      if (add && add > 0) {
+        const res = await fetch('/api/admin/spot_checks/actions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start', wrightId: Number(wrightId), count: add }),
+        })
+        const data = await res.json()
+        setCerts([...certs, ...(data.certs || [])])
+      }
+
       setShowReject(false)
       setWhy('')
       setNotes('')
-      load()
+      next()
     } catch (e) {
       alert('reject failed')
     } finally {
       setSubmitting(false)
     }
   }
+
+  const next = () => {
+    if (idx + 1 < certs.length) {
+      setIdx(idx + 1)
+    } else {
+      setCerts([])
+      setIdx(0)
+    }
+  }
+
+  if (showSetup)
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+          <h3 className="text-xl font-mono font-bold text-amber-400 mb-2">Spot Check</h3>
+
+          <div className="mb-4">
+            <label className="block font-mono text-xs uppercase text-amber-500/60 font-bold mb-2">
+              how many do you want to spot check?
+            </label>
+            <input
+              type="number"
+              className="w-full bg-zinc-950/50 border-2 border-amber-900/40 text-amber-200 font-mono rounded-xl p-3 focus:border-amber-500 outline-none transition-colors"
+              placeholder="5"
+              value={totalCount}
+              onChange={(e) => setTotalCount(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block font-mono text-xs uppercase text-amber-500/60 font-bold mb-2">
+              if rejecting, how many add more to total?
+            </label>
+            <input
+              type="number"
+              className="w-full bg-zinc-950/50 border-2 border-amber-900/40 text-amber-200 font-mono rounded-xl p-3 focus:border-amber-500 outline-none transition-colors"
+              placeholder="0"
+              value={addOnReject}
+              onChange={(e) => setAddOnReject(e.target.value)}
+            />
+            <p className="text-xs text-amber-500/40 font-mono mt-1">
+              adds new random certs if u reject
+            </p>
+          </div>
+
+          <div className="flex gap-4">
+            <Link
+              href={`/admin/spot_checks/${wrightId}`}
+              className="flex-1 bg-zinc-800/50 hover:bg-zinc-700/50 border-2 border-amber-900/40 text-amber-200 font-mono py-2 rounded-xl transition-colors text-center"
+            >
+              cancel
+            </Link>
+            <button
+              onClick={start}
+              disabled={loading}
+              className="flex-1 bg-blue-500/10 border-2 border-dashed border-blue-600 hover:border-blue-400 text-blue-400 hover:text-blue-300 font-mono py-2 rounded-xl transition-all hover:bg-blue-500/20 disabled:opacity-50"
+            >
+              {loading ? 'loading...' : 'start'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
 
   if (loading)
     return (
@@ -92,12 +176,12 @@ export default function Review({ wrightId }: { wrightId: string }) {
       </div>
     )
 
-  if (!cert)
+  if (certs.length === 0 || idx >= certs.length)
     return (
       <div className="flex h-full flex-col items-center justify-center p-8">
         <div className="text-4xl mb-4">🎉</div>
-        <h2 className="text-2xl font-mono font-bold text-amber-400 mb-2">all caught up</h2>
-        <p className="text-amber-300/60 font-mono text-sm mb-6">no more certs to check</p>
+        <h2 className="text-2xl font-mono font-bold text-amber-400 mb-2">done</h2>
+        <p className="text-amber-300/60 font-mono text-sm mb-6">checked all {idx} certs</p>
         <Link
           href="/admin/spot_checks"
           className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-mono text-sm px-6 py-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -107,6 +191,7 @@ export default function Review({ wrightId }: { wrightId: string }) {
       </div>
     )
 
+  const cert = certs[idx]
   const ytId = cert.proofVideoUrl?.match(
     /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([^&?]+)/
   )?.[1]
@@ -172,7 +257,12 @@ export default function Review({ wrightId }: { wrightId: string }) {
           >
             ← back
           </Link>
-          <div className="font-mono text-sm text-amber-500/50">cert #{cert.id}</div>
+          <div className="flex items-center gap-4">
+            <div className="font-mono text-lg font-bold text-amber-400">
+              {idx + 1}/{certs.length}
+            </div>
+            <div className="font-mono text-sm text-amber-500/50">cert #{cert.id}</div>
+          </div>
         </div>
 
         <div className="flex-1 grid grid-cols-2 gap-8 min-h-0">
