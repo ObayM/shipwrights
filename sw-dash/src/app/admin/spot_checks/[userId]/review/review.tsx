@@ -11,7 +11,7 @@ export default function Review({ wrightId }: { wrightId: string }) {
   const [certs, setCerts] = useState<any[]>([])
   const [idx, setIdx] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [showReject, setShowReject] = useState(false)
+  const [showReject, setShowReject] = useState<'full' | 'keep' | null>(null)
 
   const [why, setWhy] = useState('')
   const [notes, setNotes] = useState('')
@@ -65,7 +65,7 @@ export default function Review({ wrightId }: { wrightId: string }) {
     }
   }
 
-  const reject = async () => {
+  const reject = async (keepLb = false) => {
     const cert = certs[idx]
     if (!cert || !why) return
 
@@ -81,21 +81,24 @@ export default function Review({ wrightId }: { wrightId: string }) {
           wrightId: Number(wrightId),
           why,
           notes,
+          keepLb,
         }),
       })
 
-      const add = parseInt(addOnReject)
-      if (add && add > 0) {
-        const res = await fetch('/api/admin/spot_checks/actions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'start', wrightId: Number(wrightId), count: add }),
-        })
-        const data = await res.json()
-        setCerts([...certs, ...(data.certs || [])])
+      if (!keepLb) {
+        const add = parseInt(addOnReject)
+        if (add && add > 0) {
+          const res = await fetch('/api/admin/spot_checks/actions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'start', wrightId: Number(wrightId), count: add }),
+          })
+          const d = await res.json()
+          setCerts([...certs, ...(d.certs || [])])
+        }
       }
 
-      setShowReject(false)
+      setShowReject(null)
       setWhy('')
       setNotes('')
       next()
@@ -203,7 +206,9 @@ export default function Review({ wrightId }: { wrightId: string }) {
           <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-red-900/40 rounded-3xl max-w-lg w-full p-6 shadow-2xl">
             <h3 className="text-xl font-mono font-bold text-red-500 mb-2">flag this</h3>
             <p className="font-mono text-sm text-amber-300/50 mb-4">
-              removes from LB and creates case
+              {showReject === 'keep'
+                ? 'creates case, lb stays untouched'
+                : 'removes from LB and creates case'}
             </p>
 
             <div className="mb-4">
@@ -232,13 +237,13 @@ export default function Review({ wrightId }: { wrightId: string }) {
 
             <div className="flex gap-4">
               <button
-                onClick={() => setShowReject(false)}
+                onClick={() => setShowReject(null)}
                 className="flex-1 bg-zinc-800/50 hover:bg-zinc-700/50 border-2 border-amber-900/40 text-amber-200 font-mono py-2 rounded-xl transition-colors"
               >
                 cancel
               </button>
               <button
-                onClick={reject}
+                onClick={() => reject(showReject === 'keep')}
                 disabled={!why || submitting}
                 className="flex-1 bg-red-500/10 border-2 border-dashed border-red-600 hover:border-red-400 text-red-400 hover:text-red-300 font-mono py-2 rounded-xl transition-all hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -338,16 +343,22 @@ export default function Review({ wrightId }: { wrightId: string }) {
 
             <div className="pt-6 border-t border-amber-900/20">
               <h3 className="font-mono font-bold text-amber-400 text-center mb-4">your call</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <button
-                  onClick={() => setShowReject(true)}
-                  className="bg-red-500/10 border-2 border-dashed border-red-600 hover:border-red-400 text-red-400 hover:text-red-300 font-mono py-3 rounded-2xl transition-all hover:bg-red-500/20 hover:scale-[1.02] active:scale-[0.98]"
+                  onClick={() => setShowReject('full')}
+                  className="bg-red-500/10 border-2 border-dashed border-red-600 hover:border-red-400 text-red-400 hover:text-red-300 font-mono py-3 rounded-2xl transition-all hover:bg-red-500/20 hover:scale-[1.02] active:scale-[0.98] text-sm"
                 >
                   reject
                 </button>
                 <button
+                  onClick={() => setShowReject('keep')}
+                  className="bg-orange-500/10 border-2 border-dashed border-orange-600 hover:border-orange-400 text-orange-400 hover:text-orange-300 font-mono py-3 rounded-2xl transition-all hover:bg-orange-500/20 hover:scale-[1.02] active:scale-[0.98] text-sm"
+                >
+                  reject (keep lb)
+                </button>
+                <button
                   onClick={approve}
-                  className="bg-green-500/10 border-2 border-dashed border-green-600 hover:border-green-400 text-green-400 hover:text-green-300 font-mono py-3 rounded-2xl transition-all hover:bg-green-500/20 hover:scale-[1.02] active:scale-[0.98]"
+                  className="bg-green-500/10 border-2 border-dashed border-green-600 hover:border-green-400 text-green-400 hover:text-green-300 font-mono py-3 rounded-2xl transition-all hover:bg-green-500/20 hover:scale-[1.02] active:scale-[0.98] text-sm"
                 >
                   approve
                 </button>

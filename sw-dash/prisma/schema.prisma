@@ -385,6 +385,7 @@ model SpotCheck {
   reasoning  String?  @db.Text
   
   lbRemoved  Boolean  @default(false)
+  fpReason   String?  @db.Text
   
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

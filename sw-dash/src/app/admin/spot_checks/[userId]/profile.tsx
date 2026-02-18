@@ -131,11 +131,18 @@ function Case({ c }: { c: any }) {
               className={`px-2 py-0.5 rounded text-xs uppercase font-mono font-bold ${
                 c.status === 'resolved'
                   ? 'bg-green-500/20 text-green-400'
-                  : 'bg-red-500/20 text-red-400'
+                  : c.status === 'false_positive'
+                    ? 'bg-orange-500/20 text-orange-400'
+                    : 'bg-red-500/20 text-red-400'
               }`}
             >
               {c.status}
             </span>
+            {!c.lbRemoved && (
+              <span className="px-2 py-0.5 rounded text-xs font-mono bg-orange-500/10 text-orange-400 border border-orange-500/30">
+                no lb reduction
+              </span>
+            )}
           </div>
           <div className="font-mono text-amber-200 font-bold">{c.project || 'unknown'}</div>
         </div>

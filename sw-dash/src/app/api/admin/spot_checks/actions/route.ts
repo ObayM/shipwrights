@@ -51,7 +51,7 @@ export const POST = withParams<Record<string, never>>(PERMS.spot_check)(async ({
     }
 
     if (action === 'decide') {
-      const { certId, decision, why, notes, wrightId } = data
+      const { certId, decision, why, notes, wrightId, keepLb } = data
 
       if (!certId || !decision) return NextResponse.json({ error: 'missing data' }, { status: 400 })
 
@@ -71,7 +71,7 @@ export const POST = withParams<Record<string, never>>(PERMS.spot_check)(async ({
               status: 'unresolved',
               notes,
               reasoning: why,
-              lbRemoved: true,
+              lbRemoved: !keepLb,
             },
           })
 
@@ -82,7 +82,7 @@ export const POST = withParams<Record<string, never>>(PERMS.spot_check)(async ({
               spotCheckedAt: new Date(),
               spotCheckedBy: user.id,
               spotPassed: false,
-              spotRemoved: true,
+              spotRemoved: !keepLb,
             },
           })
         } else {
