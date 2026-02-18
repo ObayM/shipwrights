@@ -46,6 +46,7 @@ export const GET = withParams<{ userId: string }>(PERMS.spot_check)(async ({ par
         created: c.createdAt.toISOString(),
         staff: c.staff.username,
         why: c.reasoning,
+        lbRemoved: c.lbRemoved,
       }))
 
     return NextResponse.json({

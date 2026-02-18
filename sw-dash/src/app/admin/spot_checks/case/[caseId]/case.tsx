@@ -8,6 +8,9 @@ export default function Case({ caseId }: { caseId: string }) {
   const [data, setData] = useState<any>(null)
   const [error, setError] = useState(false)
   const [toggling, setToggling] = useState(false)
+  const [showFp, setShowFp] = useState(false)
+  const [fpReason, setFpReason] = useState('')
+  const [marking, setMarking] = useState(false)
 
   const load = () => {
     fetch(`/api/admin/spot_checks/case/${caseId}`)
@@ -46,6 +49,25 @@ export default function Case({ caseId }: { caseId: string }) {
     }
   }
 
+  const markFp = async () => {
+    if (!fpReason) return
+    setMarking(true)
+    try {
+      await fetch(`/api/admin/spot_checks/case/${caseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: fpReason }),
+      })
+      setShowFp(false)
+      setFpReason('')
+      load()
+    } catch (e) {
+      alert('shit broke')
+    } finally {
+      setMarking(false)
+    }
+  }
+
   const resolved = spot.status === 'resolved'
 
   const fmt = (d: string) =>
@@ -76,14 +98,70 @@ export default function Case({ caseId }: { caseId: string }) {
           </span>
         </div>
 
-        <button
-          onClick={toggle}
-          disabled={toggling}
-          className={`${resolved ? 'bg-red-500/10 border-red-600 hover:border-red-400 text-red-400 hover:text-red-300 hover:bg-red-500/20' : 'bg-green-500/10 border-green-600 hover:border-green-400 text-green-400 hover:text-green-300 hover:bg-green-500/20'} border-2 border-dashed font-mono text-sm px-6 py-2 rounded-2xl transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]`}
-        >
-          {toggling ? 'updating...' : resolved ? 'mark unresolved' : 'mark resolved'}
-        </button>
+        <div className="flex items-center gap-3">
+          {spot.lbRemoved && spot.status !== 'false_positive' && (
+            <button
+              onClick={() => setShowFp(true)}
+              className="bg-orange-500/10 border-2 border-dashed border-orange-600 hover:border-orange-400 text-orange-400 hover:text-orange-300 font-mono text-sm px-6 py-2 rounded-2xl transition-all hover:bg-orange-500/20 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              false positive
+            </button>
+          )}
+          {spot.status !== 'false_positive' && (
+            <button
+              onClick={toggle}
+              disabled={toggling}
+              className={`${
+                resolved
+                  ? 'bg-red-500/10 border-red-600 hover:border-red-400 text-red-400 hover:text-red-300 hover:bg-red-500/20'
+                  : 'bg-green-500/10 border-green-600 hover:border-green-400 text-green-400 hover:text-green-300 hover:bg-green-500/20'
+              } border-2 border-dashed font-mono text-sm px-6 py-2 rounded-2xl transition-all disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]`}
+            >
+              {toggling ? 'updating...' : resolved ? 'mark unresolved' : 'mark resolved'}
+            </button>
+          )}
+        </div>
       </div>
+
+      {showFp && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-8">
+          <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-orange-900/40 rounded-3xl max-w-lg w-full p-6 shadow-2xl">
+            <h3 className="text-xl font-mono font-bold text-orange-400 mb-2">false positive</h3>
+            <p className="font-mono text-sm text-amber-300/50 mb-4">
+              restores lb position and marks case invalid
+            </p>
+            <div className="mb-6">
+              <label className="block font-mono text-xs uppercase text-amber-500/60 font-bold mb-2">
+                why is this a false positive?
+              </label>
+              <textarea
+                className="w-full bg-zinc-950/50 border-2 border-amber-900/40 text-amber-200 font-mono rounded-xl p-3 h-24 focus:border-orange-500 outline-none transition-colors"
+                placeholder="explain..."
+                value={fpReason}
+                onChange={(e) => setFpReason(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setShowFp(false)
+                  setFpReason('')
+                }}
+                className="flex-1 bg-zinc-800/50 hover:bg-zinc-700/50 border-2 border-amber-900/40 text-amber-200 font-mono py-2 rounded-xl transition-colors"
+              >
+                cancel
+              </button>
+              <button
+                onClick={markFp}
+                disabled={!fpReason || marking}
+                className="flex-1 bg-orange-500/10 border-2 border-dashed border-orange-600 hover:border-orange-400 text-orange-400 hover:text-orange-300 font-mono py-2 rounded-xl transition-all hover:bg-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {marking ? 'marking...' : 'confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -92,6 +170,21 @@ export default function Case({ caseId }: { caseId: string }) {
               why was this flagged?
             </h3>
             <p className="font-mono text-amber-200 leading-relaxed">{spot.reasoning}</p>
+
+            {spot.fpReason && (
+              <div className="mt-4 bg-orange-500/10 border border-orange-500/40 rounded-xl p-3">
+                <p className="font-mono text-xs uppercase text-orange-400/70 font-bold mb-1">
+                  false positive reason
+                </p>
+                <p className="font-mono text-orange-200 text-sm">{spot.fpReason}</p>
+              </div>
+            )}
+
+            {!spot.lbRemoved && (
+              <div className="mt-4 inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/40 text-orange-400 font-mono text-xs px-3 py-1.5 rounded-xl">
+                lb not reduced - minor case for reference only
+              </div>
+            )}
 
             {spot.notes && (
               <div className="mt-6 pt-6 border-t border-red-900/20">
@@ -169,6 +262,12 @@ export default function Case({ caseId }: { caseId: string }) {
                     demo
                   </a>
                 )}
+                <a
+                  href={`/admin/ship_certifications/${cert.id}/edit`}
+                  className="text-amber-400 hover:underline font-mono text-sm"
+                >
+                  ship cert
+                </a>
               </div>
             </div>
 

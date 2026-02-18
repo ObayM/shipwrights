@@ -88,3 +88,58 @@ export const PATCH = withParams<{ caseId: string }>(PERMS.spot_check)(async ({
     return NextResponse.json({ error: 'update failed' }, { status: 500 })
   }
 })
+
+export const PUT = withParams<{ caseId: string }>(PERMS.spot_check)(async ({
+  params,
+  req,
+  user,
+  ip,
+  ua,
+}) => {
+  try {
+    const { caseId } = params
+    const { reason } = await req.json()
+
+    if (!reason) return NextResponse.json({ error: 'reason required' }, { status: 400 })
+
+    const current = await prisma.spotCheck.findUnique({ where: { caseId } })
+    if (!current) return NextResponse.json({ error: 'case not found' }, { status: 404 })
+    if (!current.lbRemoved)
+      return NextResponse.json({ error: 'lb was not removed for this case' }, { status: 400 })
+
+    await prisma.$transaction(async (tx) => {
+      await tx.spotCheck.update({
+        where: { caseId },
+        data: {
+          status: 'false_positive',
+          fpReason: reason,
+          resolvedAt: new Date(),
+          resolvedBy: user.id,
+        },
+      })
+
+      await tx.shipCert.update({
+        where: { id: current.certId },
+        data: { spotRemoved: false },
+      })
+    })
+
+    const cert = await prisma.shipCert.findUnique({
+      where: { id: current.certId },
+      select: { projectName: true, reviewerId: true },
+    })
+
+    await log({
+      action: 'case_false_positive',
+      status: 200,
+      user,
+      context: `false positive ${caseId}`,
+      target: { type: 'spot_check', id: current.id },
+      meta: { caseId, reason, project: cert?.projectName, wrightId: cert?.reviewerId, ip, ua },
+    })
+
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return NextResponse.json({ error: 'shit broke' }, { status: 500 })
+  }
+})
