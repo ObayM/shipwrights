@@ -17,6 +17,7 @@ interface User {
   skills?: string[]
   staffNotes?: string | null
   ftuid?: string | null
+  swApiKey?: string | null
 }
 
 interface Key {
@@ -616,7 +617,119 @@ export function UserProfile({
             <div className="text-amber-300/40 font-mono text-xs">no actions yet</div>
           )}
         </div>
+        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 shadow-2xl">
+          <h3 className="text-amber-400 font-mono text-sm mb-3">api key</h3>
+          {canEdit ? (
+            <ApiKeyManager
+              userId={user.id}
+              initialKey={user.swApiKey}
+              onUpdate={(k) => setUser((p) => ({ ...p, swApiKey: k }))}
+            />
+          ) : (
+            <div className="text-amber-300/40 font-mono text-xs">hidden</div>
+          )}
+        </div>
       </div>
     </>
+  )
+}
+
+function ApiKeyManager({
+  userId,
+  initialKey,
+  onUpdate,
+}: {
+  userId: number
+  initialKey?: string | null
+  onUpdate: (k: string | null) => void
+}) {
+  const [key, setKey] = useState(initialKey)
+  const [loading, setLoading] = useState(false)
+  const [show, setShow] = useState(false)
+
+  const generate = async () => {
+    if (key && !confirm('replace existing key?')) return
+
+    setLoading(true)
+    try {
+      const r = await fetch(`/api/admin/users/${userId}/apikey`, { method: 'POST' })
+      if (r.ok) {
+        const d = await r.json()
+        setKey(d.key)
+        onUpdate(d.key)
+        setShow(true)
+      }
+    } catch {
+      alert('failed to generate key :(')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const revoke = async () => {
+    if (!confirm('revoke key?')) return
+    setLoading(true)
+    try {
+      const r = await fetch(`/api/admin/users/${userId}/apikey`, { method: 'DELETE' })
+      if (r.ok) {
+        setKey(null)
+        onUpdate(null)
+      }
+    } catch {
+      alert('failed to revoke :(')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!key) {
+    return (
+      <button
+        onClick={generate}
+        disabled={loading}
+        className="bg-amber-900/30 text-amber-200 font-mono text-xs px-3 py-2 border-2 border-amber-700/50 rounded-xl hover:bg-amber-900/50 transition-colors disabled:opacity-50"
+      >
+        {loading ? 'generating...' : 'generate key'}
+      </button>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <code className="flex-1 bg-black/50 p-2 rounded-lg font-mono text-xs text-amber-100 break-all border border-amber-900/30">
+          {show ? key : '•'.repeat(24)}
+        </code>
+        <button
+          onClick={() => setShow(!show)}
+          className="text-amber-400 font-mono text-xs hover:text-amber-300"
+        >
+          {show ? 'hide' : 'show'}
+        </button>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => navigator.clipboard.writeText(key)}
+          className="flex-1 bg-zinc-800 text-amber-200 font-mono text-xs px-3 py-2 rounded-xl hover:bg-zinc-700 transition-colors border border-amber-900/30"
+        >
+          Copy
+        </button>
+        <button
+          onClick={generate}
+          disabled={loading}
+          className="flex-1 bg-amber-900/30 text-amber-200 font-mono text-xs px-3 py-2 rounded-xl hover:bg-amber-900/50 transition-colors border border-amber-900/30 disabled:opacity-50"
+        >
+          Roll
+        </button>
+        <button
+          onClick={revoke}
+          disabled={loading}
+          className="flex-1 bg-red-900/30 text-red-400 font-mono text-xs px-3 py-2 rounded-xl hover:bg-red-900/50 transition-colors border border-red-900/30 disabled:opacity-50"
+        >
+          Revoke
+        </button>
+      </div>
+    </div>
   )
 }

@@ -45,7 +45,7 @@ model User {
   spotStaff    SpotCheck[] @relation("Staff")
   spotReviewed SpotCheck[] @relation("Reviewed")
   spotResolved SpotCheck[] @relation("Resolved")
-
+  swApiKey        String?      @unique @db.VarChar(500)
   @@map("users")
 }
 
