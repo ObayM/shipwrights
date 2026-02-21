@@ -32,6 +32,7 @@ export default async function Profile({ params }: Params) {
         staffNotes: true,
         skills: true,
         ftuid: true,
+        swApiKey: true,
       },
     }),
     prisma.yubikey.findMany({
@@ -74,6 +75,7 @@ export default async function Profile({ params }: Params) {
     staffNotes: user.staffNotes,
     skills: (user.skills as string[] | null) || [],
     ftuid: user.ftuid,
+    swApiKey: user.swApiKey,
   }
 
   const keysData = keys.map((k) => ({
