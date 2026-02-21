@@ -6,6 +6,8 @@ import { prisma } from '@/lib/db'
 import { can, PERMS } from '@/lib/perms'
 import { log } from '@/lib/log'
 
+const REDACTED = 'REDACTED'
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const authHeader = req.headers.get('Authorization')
@@ -32,24 +34,15 @@ export async function GET(req: Request) {
   let take: number | undefined = undefined
   if (limitParam) {
     const parsed = parseInt(limitParam, 10)
-    if (!isNaN(parsed) && parsed > 0) {
-      take = parsed
-    }
+    if (!isNaN(parsed) && parsed > 0) take = parsed
   }
 
   const where: Prisma.ShipCertWhereInput = {}
-
-  if (status) {
-    where.status = status
-  }
-  if (type) {
-    where.projectType = type
-  }
+  if (status) where.status = status
+  if (type) where.projectType = type
   if (since) {
     const date = new Date(since)
-    if (!isNaN(date.getTime())) {
-      where.createdAt = { gt: date }
-    }
+    if (!isNaN(date.getTime())) where.createdAt = { gt: date }
   }
 
   try {
@@ -57,34 +50,56 @@ export async function GET(req: Request) {
       where,
       orderBy: { createdAt: 'desc' },
       take,
-      include: {
+      select: {
+        id: true,
+        projectName: true,
+        projectType: true,
+        description: true,
+        demoUrl: true,
+        repoUrl: true,
+        readmeUrl: true,
+        devTime: true,
+        status: true,
+        reviewFeedback: true,
+        internalNotes: true,
+        proofVideoUrl: true,
+        reviewStartedAt: true,
+        reviewCompletedAt: true,
+        createdAt: true,
+        updatedAt: true,
         reviewer: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            slackId: true,
-          },
+          select: { id: true, username: true, avatar: true, slackId: true },
         },
         claimer: {
-          select: {
-            id: true,
-            username: true,
-            avatar: true,
-            slackId: true,
-          },
+          select: { id: true, username: true, avatar: true, slackId: true },
         },
         assignments: {
-          select: {
-            id: true,
-            repoUrl: true,
-            demoUrl: true,
-          },
+          select: { id: true, repoUrl: true, demoUrl: true },
         },
       },
     })
 
-    return NextResponse.json(logs)
+    const out = logs.map((c) => ({
+      ...c,
+      ftProjectId: REDACTED,
+      ftSlackId: REDACTED,
+      ftUsername: REDACTED,
+      syncedToFt: REDACTED,
+      cookiesEarned: REDACTED,
+      payoutMulti: REDACTED,
+      customBounty: REDACTED,
+      aiSummary: REDACTED,
+      yswsReturnReason: REDACTED,
+      yswsReturnedBy: REDACTED,
+      yswsReturnedAt: REDACTED,
+      spotChecked: REDACTED,
+      spotCheckedAt: REDACTED,
+      spotCheckedBy: REDACTED,
+      spotPassed: REDACTED,
+      spotRemoved: REDACTED,
+    }))
+
+    return NextResponse.json(out)
   } catch (e: any) {
     await log({
       action: 'wrights_api_exploded',
