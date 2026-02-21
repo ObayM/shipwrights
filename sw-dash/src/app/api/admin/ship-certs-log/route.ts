@@ -1,9 +1,11 @@
 export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getUser } from '@/lib/server-auth'
 import { can, PERMS } from '@/lib/perms'
+import { log } from '@/lib/log'
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
@@ -40,7 +42,7 @@ export async function GET(req: Request) {
     }
   }
 
-  const where: any = {}
+  const where: Prisma.ShipCertWhereInput = {}
 
   if (status) {
     where.status = status
@@ -51,7 +53,7 @@ export async function GET(req: Request) {
   if (since) {
     const date = new Date(since)
     if (!isNaN(date.getTime())) {
-      where.updatedAt = { gt: date }
+      where.createdAt = { gt: date }
     }
   }
 
@@ -88,8 +90,17 @@ export async function GET(req: Request) {
     })
 
     return NextResponse.json(logs)
-  } catch (error) {
-    console.error('Error fetching ship cert logs:', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  } catch (e: any) {
+    await log({
+      action: 'wrights_api_exploded',
+      status: 500,
+      user,
+      error: {
+        name: e.name || 'Error',
+        message: e.message || 'unknown',
+        stack: e.stack,
+      },
+    })
+    return NextResponse.json({ error: 'obays API exploded' }, { status: 500 })
   }
 }
