@@ -22,7 +22,10 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const existing = await prisma.user.findUnique({ where: { id: userId }, select: { swApiKey: true } })
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { swApiKey: true },
+  })
   const action = existing?.swApiKey ? 'api key rolled' : 'api key generated'
 
   const key = `sw_live_${randomBytes(24).toString('hex')}`
