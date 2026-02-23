@@ -15,7 +15,11 @@ export const FAQ: Record<string, FAQItem[]> = {
     },
     {
       q: 'How long does it take?',
-      a: 'Depends on the queue, but usually 1-7 days! Sometimes faster if we are vibing. Check out the /queue page for current stats!',
+      a: 'Depends on the queue, but usually 1-7 days! Sometimes faster if we are vibing. Check out the queue page for current stats!',
+      link: {
+        text: 'View the queue',
+        url: 'https://us.review.hackclub.com/queue',
+      },
     },
     {
       q: 'What counts as a ship?',
@@ -23,11 +27,31 @@ export const FAQ: Record<string, FAQItem[]> = {
     },
     {
       q: 'How do I become a Shipwright?',
-      a: 'Shipwrights are invite-only! We look for people who are consistently active, positive, helpful, and genuinely interested in being part of the team. Just be yourself, be friendly, and if you are doing great work, we will notice you :)',
+      a: 'Shipwrights are invite-only! We look for people who are consistently active, positive, helpful, and genuinely interested in being part of the team. Just be yourself, be friendly, and if you are doing great work, we will notice you. You can see this amazing message from Nullskulls regarding joining the Shipwrights for more info! :).',
+      link: {
+        text: 'Read Nullskulls\' message',
+        url: 'https://hackclub.slack.com/archives/C099P9FQQ91/p1765392376942069',
+      },
     },
     {
       q: 'What language does my project need to be in?',
       a: 'Your project code can be in any programming language! However, your project description and devlogs need to be in English.',
+    },
+    {
+      q: 'Whats the difference between the Shipwrights and the YSWS Team?',
+      a: 'The Shipwrights look at your demo, README, and repository. While the YSWS Team checks your commit and devlog activity, as well as double-checking to make sure we didnt make any mistakes in our review process (which we do!)',
+    },
+    {
+      q: 'How come some projects get reviewed faster than others?',
+      a: 'Although pending projects are in a "queue" we dont review projects by oldest in queue. The reason for this is that some Shipwrights can only review certain types of projects, meaning that we just review what we can test with our knowledge and devices.',
+    },
+    {
+      q: 'I have a question that is not answered here or is project specific!!',
+      a: 'You can ask in #ask-the-shipwrights on the Slack! We actively look at this channel and are happy to discuss your project!',
+      link: {
+        text: 'Ask in #ask-the-shipwrights',
+        url: 'https://hackclub.enterprise.slack.com/archives/C099P9FQQ91',
+      },
     },
   ],
   'Ships! Ships! Ships!': [
