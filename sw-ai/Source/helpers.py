@@ -415,4 +415,4 @@ def format_vibes_message(tickets):
 {ticket_data}
 
 ## JSON Response (no markdown)
-{{"positive": {{"result": true, "reason": "short"}}, "quotes": [{{"ticket_id": "123", "text": "quote", "reason": "short"}}], "suggestion": {{"action": "what", "reason": "short"}}}}"""""
+{{"positive": {{"result": true, "reason": "short", "sentiment": "number from 0 to 1"}}, "quotes": [{{"ticket_id": "123", "text": "quote", "reason": "short"}}], "suggestion": {{"action": "what", "reason": "short"}}}}"""""

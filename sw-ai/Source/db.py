@@ -1,4 +1,4 @@
-import os
+import os, json
 from helpers import format_messages
 from dotenv import load_dotenv
 from mysql.connector import pooling
@@ -14,24 +14,6 @@ db_pool = pooling.MySQLConnectionPool(
     password=os.getenv("DB_PASSWORD"),
     database=os.getenv("DB_NAME"),
 )
-
-def get_ticket_messages(ticket_id):
-    conn = db_pool.get_connection()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            """
-            SELECT msg, isStaff
-            FROM ticket_msgs
-            WHERE ticketId = %s
-            ORDER BY createdAt ASC
-            """,
-            (ticket_id,)
-        )
-        return cursor.fetchall()
-    finally:
-        cursor.close()
-        conn.close()
 
 def get_ticket_ts(ticket_id):
     conn = db_pool.get_connection()
@@ -110,6 +92,31 @@ def get_recent_tickets():
             })
 
         return result
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def save_metrics_history(data, created_at=None):
+    conn = db_pool.get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        payload = json.dumps(data, ensure_ascii=False)
+        if created_at is not None:
+            cursor.execute(
+                "INSERT INTO metrics_history (createdAt, output) VALUES (%s, %s)",
+                (created_at, payload),
+            )
+        else:
+            cursor.execute("INSERT INTO metrics_history (output) VALUES (%s)", (payload,))
+        conn.commit()
+        return cursor.lastrowid
+    except Exception as err:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        return None
     finally:
         cursor.close()
         conn.close()

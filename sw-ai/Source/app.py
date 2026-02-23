@@ -1,7 +1,8 @@
-import os, requests, json, logging
+import os, requests, json, logging, threading
 import db, helpers
 from flask import jsonify, request, Flask
 from dotenv import load_dotenv
+from history import history_loop
 
 load_dotenv()
 
@@ -394,6 +395,7 @@ def get_vibes():
 
 if __name__ == "__main__":
     try:
+        reminder_thread = threading.Thread(target=history_loop, daemon=True)
         print("Services up and running!")
         app.run(host='0.0.0.0', port=PORT, debug=False, use_reloader=False)
     except Exception as e:
