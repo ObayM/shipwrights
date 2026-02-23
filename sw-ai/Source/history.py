@@ -1,9 +1,9 @@
 import schedule, time, requests, json
 import helpers
 from db import save_metrics_history, get_recent_tickets
-from app import AI_MODEL
 from datetime import datetime
 
+AI_MODEL = "google/gemini-3-flash-preview"
 
 
 def save_metrics():
