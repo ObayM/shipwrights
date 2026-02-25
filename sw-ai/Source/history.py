@@ -1,9 +1,8 @@
 import schedule, time, requests, json
-import helpers
+from helpers import OPENROUTER_KEY, AI_MODEL
+from helpers import format_vibes_message, clean_json_response
 from db import save_metrics_history, get_recent_tickets, get_context_tickets
 from datetime import datetime
-
-AI_MODEL = "google/gemini-3-flash-preview"
 
 
 def save_metrics():
@@ -15,7 +14,7 @@ def save_metrics():
         resp = requests.post(
             url="https://openrouter.ai/api/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
+                "Authorization": f"Bearer {OPENROUTER_KEY}",
                 "Content-Type": "application/json"
             },
             json={
@@ -24,7 +23,7 @@ def save_metrics():
                 "messages": [
                     {
                         "role": "user",
-                        "content": helpers.format_vibes_message(get_recent_tickets(), get_context_tickets())
+                        "content": format_vibes_message(get_recent_tickets(), get_context_tickets())
                     }
                 ]
             },
@@ -52,7 +51,7 @@ def save_metrics():
         if not content:
             return None
 
-        cleaned = helpers.clean_json_response(content)
+        cleaned = clean_json_response(content)
         ai_response = json.loads(cleaned)
     except Exception as e:
         print(f"Error saving metrics: {e}")

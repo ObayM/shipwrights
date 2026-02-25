@@ -1,9 +1,18 @@
-import requests, re, json, os
+import requests, re, json, os, logging
 from dotenv import load_dotenv
 
 load_dotenv()
 
+SW_API_KEY = os.environ.get("SW_API_KEY")
+PORT = 45200
 OPENROUTER_KEY = os.environ.get("OPENROUTER_KEY")
+AI_MODEL = "google/gemini-3-flash-preview"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s: %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 TYPES = [
   "CLI",
@@ -430,3 +439,67 @@ def format_vibes_message(tickets, old_tickets):
 
 ## JSON Response (no markdown)
 {{"positive": {{"result": true, "reason": "short but detailed", "sentiment": "number from 0 to 1"}}, "quotes": [{{"ticket_id": "123", "text": "quote", "reason": "short but detailed"}}], "suggestion": {{"action": "what", "reason": "short but detailed referencing the ticket this originates from."}}}}"""""
+
+
+def get_ai_response(content=None, tokens=1000, timeout=60, keys=()):
+    try:
+        response = requests.post(
+            url="https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": AI_MODEL,
+                "max_tokens": tokens,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": content
+                    }
+                ]
+            },
+            timeout=timeout
+        )
+        logger.info(f"OpenRouter status code: {response.status_code}")
+        response.raise_for_status()
+        result = response.json()
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"API request failed: {str(e)}")
+        if hasattr(e, 'response') and e.response is not None:
+            logger.error(f"Response status: {e.response.status_code}")
+            logger.error(f"Response body: {e.response.text}")
+        return {"error" : str(e), content: None}
+
+    if "error" in result:
+        logger.error(f"OpenRouter returned error: {result['error']}")
+        return {"error": result["error"], content: None}
+
+    if "choices" not in result or not result["choices"]:
+        logger.error(f"Unexpected API response structure: {result}")
+        return {"error": "Unexpected API response", "response": result}
+
+    content = result["choices"][0]["message"]["content"]
+    logger.info(f"AI content received: {content[:500] if content else 'EMPTY'}")
+
+    if not content or not content.strip():
+        logger.error("Empty response from AI")
+        return {"error": "Empty response from AI", content: None}
+
+    try:
+        cleaned_content = clean_json_response(content)
+        ai_response = json.loads(cleaned_content)
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error: {e}")
+        logger.error(f"Raw content that failed to parse: {content}")
+        return {"error": "AI returned invalid JSON", "content": content}
+
+    if not all(key in ai_response for key in keys):
+        logger.error(f"Missing required fields. Got: {ai_response.keys()}")
+        return {"error": "Missing required fields in AI response", "content": content}
+
+    return {"error": None, "content": ai_response}
+
+"['action', 'status', 'summary']"
+"helpers.format_summary_prompt(ticket_messages, ticket_question)"

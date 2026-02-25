@@ -1,20 +1,11 @@
-import os, requests, json, logging, threading
-import db, helpers
+import threading
+from helpers import *
+from db import *
 from flask import jsonify, request, Flask
 from dotenv import load_dotenv
 from history import history_loop
 
 load_dotenv()
-
-PORT = 45200
-SW_API_KEY = os.environ.get("SW_API_KEY")
-AI_MODEL = "google/gemini-3-flash-preview"
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] %(levelname)s: %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -32,67 +23,17 @@ def health():
 def ticket_summary():
     ticket_id = request.json.get("ticket_id")
     logger.info(f"Processing ticket_id: {ticket_id}")
-    ticket_messages = db.get_ticket_messages(ticket_id)
-    ticket_question = db.get_ticket_question(ticket_id)
+    ticket_messages = get_ticket_messages(ticket_id)
+    ticket_question = get_ticket_question(ticket_id)
     logger.info(f"Ticket messages count: {len(ticket_messages) if ticket_messages else 0}")
     logger.info(f"Ticket question: {ticket_question}")
 
-    try:
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": AI_MODEL,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": helpers.format_summary_prompt(ticket_messages, ticket_question)
-                    }
-                ]
-            },
-            timeout=30
-        )
-        logger.info(f"OpenRouter status code: {response.status_code}")
-        logger.info(f"OpenRouter response headers: {dict(response.headers)}")
-        logger.info(f"OpenRouter raw response: {response.text[:1000]}")
-        response.raise_for_status()
-        result = response.json()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {str(e)}")
-        if hasattr(e, 'response') and e.response is not None:
-            logger.error(f"Response status: {e.response.status_code}")
-            logger.error(f"Response body: {e.response.text}")
-        return jsonify({"error": f"API request failed: {str(e)}"}), 500
+    summary_message = format_summary_prompt(ticket_messages=ticket_messages, ticket_question=ticket_question)
+    response = get_ai_response(content=summary_message, keys=['action', 'status', 'summary'])
 
-    if "error" in result:
-        logger.error(f"OpenRouter returned error: {result['error']}")
-        return jsonify({"error": result["error"]}), 500
-
-    if "choices" not in result or not result["choices"]:
-        logger.error(f"Unexpected API response structure: {result}")
-        return jsonify({"error": "Unexpected API response", "response": result}), 500
-
-    content = result["choices"][0]["message"]["content"]
-    logger.info(f"AI content received: {content[:500] if content else 'EMPTY'}")
-
-    if not content or not content.strip():
-        logger.error("Empty response from AI")
-        return jsonify({"error": "Empty response from AI"}), 500
-
-    try:
-        cleaned_content = helpers.clean_json_response(content)
-        ai_response = json.loads(cleaned_content)
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error: {e}")
-        logger.error(f"Raw content that failed to parse: {content}")
-        return jsonify({"error": "AI returned invalid JSON", "raw_content": content}), 500
-
-    if not all(key in ai_response for key in ['action', 'status', 'summary']):
-        logger.error(f"Missing required fields. Got: {ai_response.keys()}")
-        return jsonify({"error": "Missing required fields in AI response", "raw_content": content}), 500
+    if response["error"]:
+        return jsonify(response), 500
+    ai_response = response["content"]
 
     logger.info(f"Successfully processed ticket {ticket_id}")
     return jsonify({
@@ -106,64 +47,14 @@ def auto_complete():
     ticket_id = request.json.get("ticket_id")
     message = request.json.get("message")
     logger.info(f"Processing ticket_id: {ticket_id}")
-    ticket_messages = db.get_ticket_messages(ticket_id)
-    ticket_question = db.get_ticket_question(ticket_id)
-    try:
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": AI_MODEL,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": helpers.format_completion_prompt(ticket_messages=ticket_messages, ticket_question=ticket_question, message=message)
-                    }
-                ]
-            },
-            timeout=30
-        )
-        logger.info(f"OpenRouter status code: {response.status_code}")
-        logger.info(f"OpenRouter response headers: {dict(response.headers)}")
-        logger.info(f"OpenRouter raw response: {response.text[:1000]}")
-        response.raise_for_status()
-        result = response.json()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {str(e)}")
-        if hasattr(e, 'response') and e.response is not None:
-            logger.error(f"Response status: {e.response.status_code}")
-            logger.error(f"Response body: {e.response.text}")
-        return jsonify({"error": f"API request failed: {str(e)}"}), 500
+    ticket_messages = get_ticket_messages(ticket_id)
+    ticket_question = get_ticket_question(ticket_id)
 
-    if "error" in result:
-        logger.error(f"OpenRouter returned error: {result['error']}")
-        return jsonify({"error": result["error"]}), 500
-
-    if "choices" not in result or not result["choices"]:
-        logger.error(f"Unexpected API response structure: {result}")
-        return jsonify({"error": "Unexpected API response", "response": result}), 500
-
-    content = result["choices"][0]["message"]["content"]
-    logger.info(f"AI content received: {content[:500] if content else 'EMPTY'}")
-
-    if not content or not content.strip():
-        logger.error("Empty response from AI")
-        return jsonify({"error": "Empty response from AI"}), 500
-
-    try:
-        cleaned_content = helpers.clean_json_response(content)
-        ai_response = json.loads(cleaned_content)
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error: {e}")
-        logger.error(f"Raw content that failed to parse: {content}")
-        return jsonify({"error": "AI returned invalid JSON", "raw_content": content}), 500
-
-    if not all(key in ai_response for key in ['paraphrased']):
-        logger.error(f"Missing required fields. Got: {ai_response.keys()}")
-        return jsonify({"error": "Missing required fields in AI response", "raw_content": content}), 500
+    completion_message = format_completion_prompt(ticket_messages=ticket_messages, ticket_question=ticket_question, message=message)
+    response = get_ai_response(content=completion_message, keys=['paraphrased'])
+    if response["error"]:
+        return jsonify(response), 500
+    ai_response = response["content"]
 
     logger.info(f"Successfully processed ticket {ticket_id}")
     return jsonify({
@@ -174,67 +65,16 @@ def auto_complete():
 def detect_issue():
     ticket_id = request.json.get("ticket_id")
     logger.info(f"Processing ticket_id: {ticket_id}")
-    ticket_messages = db.get_ticket_messages(ticket_id)
-    ticket_question = db.get_ticket_question(ticket_id)
-    try:
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": AI_MODEL,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": helpers.format_detection_prompt(ticket_messages=ticket_messages,
-                                                                    ticket_question=ticket_question)
-                    }
-                ]
-            },
-            timeout=30
-        )
-        logger.info(f"OpenRouter status code: {response.status_code}")
-        logger.info(f"OpenRouter response headers: {dict(response.headers)}")
-        logger.info(f"OpenRouter raw response: {response.text[:1000]}")
-        response.raise_for_status()
-        result = response.json()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {str(e)}")
-        if hasattr(e, 'response') and e.response is not None:
-            logger.error(f"Response status: {e.response.status_code}")
-            logger.error(f"Response body: {e.response.text}")
-        return jsonify({"error": f"API request failed: {str(e)}"}), 500
+    ticket_messages = get_ticket_messages(ticket_id)
+    ticket_question = get_ticket_question(ticket_id)
 
-    if "error" in result:
-        logger.error(f"OpenRouter returned error: {result['error']}")
-        return jsonify({"error": result["error"]}), 500
+    issue_detection_message = format_detection_prompt(ticket_messages=ticket_messages, ticket_question=ticket_question)
+    response = get_ai_response(content=issue_detection_message, keys=['detection'])
 
-    if "choices" not in result or not result["choices"]:
-        logger.error(f"Unexpected API response structure: {result}")
-        return jsonify({"error": "Unexpected API response", "response": result}), 500
+    if response["error"]:
+        return jsonify(response), 500
+    ai_response = response["content"]
 
-    content = result["choices"][0]["message"]["content"]
-    logger.info(f"AI content received: {content[:500] if content else 'EMPTY'}")
-
-    if not content or not content.strip():
-        logger.error("Empty response from AI")
-        return jsonify({"error": "Empty response from AI"}), 500
-
-    try:
-        cleaned_content = helpers.clean_json_response(content)
-        ai_response = json.loads(cleaned_content)
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error: {e}")
-        logger.error(f"Raw content that failed to parse: {content}")
-        return jsonify({"error": "AI returned invalid JSON", "raw_content": content}), 500
-
-    if not all(key in ai_response for key in ['detection']):
-        logger.error(f"Missing required fields. Got: {ai_response.keys()}")
-        return jsonify({"error": "Missing required fields in AI response", "raw_content": content}), 500
-
-    logger.info(f"Successfully processed ticket {ticket_id}")
     return jsonify({
         "detection": ai_response['detection'].lower(),
     }), 200
@@ -248,7 +88,7 @@ def type_check():
         "demoUrl": request.json.get("demoUrl"),
         "repoUrl": request.json.get("repoUrl"),
     }
-    result = helpers.check_type(data)
+    result = check_type(data)
     return jsonify(result), 200
 
 
@@ -263,131 +103,27 @@ def project_summary():
     repo_url = data.get("repoUrl")
 
     logger.info(f"Processing summary for project: {project_name}")
-
-    try:
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": AI_MODEL,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": helpers.format_project_summary_prompt(
-                            project_name, project_type, readme_content, demo_url, repo_url
-                        )
-                    }
-                ]
-            },
-            timeout=60
-        )
-        logger.info(f"OpenRouter status code: {response.status_code}")
-        response.raise_for_status()
-        result = response.json()
-        
-    except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {str(e)}")
-        if hasattr(e, 'response') and e.response is not None:
-            logger.error(f"Response status: {e.response.status_code}")
-            logger.error(f"Response body: {e.response.text}")
-        return jsonify({"error": f"API request failed: {str(e)}"}), 500
-
-    if "error" in result:
-        logger.error(f"OpenRouter returned error: {result['error']}")
-        return jsonify({"error": result["error"]}), 500
-
-    if "choices" not in result or not result["choices"]:
-        logger.error(f"Unexpected API response structure: {result}")
-        return jsonify({"error": "Unexpected API response", "response": result}), 500
-
-    content = result["choices"][0]["message"]["content"]
-    logger.info(f"AI content received: {content[:500] if content else 'EMPTY'}")
-
-    if not content or not content.strip():
-        logger.error("Empty response from AI")
-        return jsonify({"error": "Empty response from AI"}), 500
-
-    try:
-        cleaned_content = helpers.clean_json_response(content)
-        ai_response = json.loads(cleaned_content)
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error: {e}")
-        logger.error(f"Raw content that failed to parse: {content}")
-        return jsonify({"error": "AI returned invalid JSON", "raw_content": content}), 500
-
-    if not all(key in ai_response for key in ['summary']):
-        logger.error(f"Missing required fields. Got: {ai_response.keys()}")
-        return jsonify({"error": "Missing required fields in AI response", "raw_content": content}), 500
-
+    summary_message = format_project_summary_prompt(project_name, project_type, readme_content, demo_url, repo_url)
+    response = get_ai_response(content=summary_message, keys=['summary'])
+    if response["error"]:
+        return jsonify(response), 500
+    ai_response = response["content"]
     return jsonify(ai_response), 200
 
 @app.get("/metrics/qualitative")
 def get_vibes():
     logger.info(f"Processing today's qualitative metrics.")
 
-    try:
-        response = requests.post(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {helpers.OPENROUTER_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": AI_MODEL,
-                "max_tokens": 1000,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": helpers.format_vibes_message(db.get_recent_tickets(), db.get_context_tickets())
-                    }
-                ]
-            },
-            timeout=120
-        )
-        logger.info(f"OpenRouter status code: {response.status_code}")
-        response.raise_for_status()
-        result = response.json()
+    vibes_message = format_vibes_message(get_recent_tickets(), get_context_tickets())
+    response = get_ai_response(content=vibes_message, tokens=2500, timeout=180, keys=['positive', 'quotes', 'suggestion'])
 
-    except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {str(e)}")
-        if hasattr(e, 'response') and e.response is not None:
-            logger.error(f"Response status: {e.response.status_code}")
-            logger.error(f"Response body: {e.response.text}")
-        return jsonify({"error": f"API request failed: {str(e)}"}), 500
+    if response["error"]:
+        return jsonify(response), 500
+    ai_response = response["content"]
 
-    if "error" in result:
-        logger.error(f"OpenRouter returned error: {result['error']}")
-        return jsonify({"error": result["error"]}), 500
-
-    if "choices" not in result or not result["choices"]:
-        logger.error(f"Unexpected API response structure: {result}")
-        return jsonify({"error": "Unexpected API response", "response": result}), 500
-
-    content = result["choices"][0]["message"]["content"]
-    logger.info(f"AI content received: {content[:500] if content else 'EMPTY'}")
-
-    if not content or not content.strip():
-        logger.error("Empty response from AI")
-        return jsonify({"error": "Empty response from AI"}), 500
-
-    try:
-        cleaned_content = helpers.clean_json_response(content)
-        ai_response = json.loads(cleaned_content)
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error: {e}")
-        logger.error(f"Raw content that failed to parse: {content}")
-        return jsonify({"error": "AI returned invalid JSON", "raw_content": content}), 500
-
-    if not all(key in ai_response for key in ['positive', 'quotes', 'suggestion']):
-        logger.error(f"Missing required fields. Got: {ai_response.keys()}")
-        return jsonify({"error": "Missing required fields in AI response", "raw_content": content}), 500
-    logger.info("Successfully processed qualitative metrics")
     for i, quote in enumerate(ai_response["quotes"]):
         ticket_id = quote["ticket_id"].lstrip("#")
-        thread = db.get_ticket_ts(ticket_id)
+        thread = get_ticket_ts(ticket_id)
         if thread:
             ai_response["quotes"][i]["link"] = "https://hackclub.slack.com/archives/C099P9FQQ91/p" + thread[:10] + thread[11:]
 
