@@ -53,9 +53,59 @@ interface Filters {
   to?: string | null
 }
 
+async function statsData() {
+  const [statusCounts, allRows] = await Promise.all([
+    prisma.yswsReview.groupBy({ by: ['status'], _count: true }),
+    prisma.yswsReview.findMany({
+      select: { status: true, devlogs: true, decisions: true, createdAt: true, updatedAt: true },
+    }),
+  ])
+
+  const countMap = Object.fromEntries(statusCounts.map((s) => [s.status, s._count]))
+  const pending = countMap['pending'] || 0
+  const done = countMap['done'] || 0
+  const returned = countMap['returned'] || 0
+
+  let hoursApproved = 0,
+    hoursRejected = 0,
+    hoursReduced = 0,
+    hoursToReview = 0
+  let totalHang = 0,
+    hangCount = 0
+  for (const r of allRows) {
+    const devs = (r.devlogs as FtDevlogData[] | null) || []
+    const decs = (r.decisions as Decision[] | null) || []
+    for (const d of decs) {
+      const dev = devs.find((x) => x.ftDevlogId === d.ftDevlogId)
+      const origHrs = dev ? dev.origSecs / 3600 : 0
+      const approvedHrs = (d.approvedMins || 0) / 60
+      if (d.status === 'rejected') hoursRejected += origHrs
+      else if (d.status === 'approved') {
+        hoursApproved += approvedHrs
+        if (approvedHrs < origHrs) hoursReduced += origHrs - approvedHrs
+      } else if (d.status === 'pending') hoursToReview += origHrs
+    }
+    if (r.status !== 'pending') {
+      totalHang += new Date(r.updatedAt).getTime() - new Date(r.createdAt).getTime()
+      hangCount++
+    }
+  }
+
+  return {
+    pending,
+    done,
+    returned,
+    total: pending + done + returned,
+    hoursApproved: Math.round(hoursApproved),
+    hoursRejected: Math.round(hoursRejected),
+    hoursReduced: Math.round(hoursReduced),
+    hoursToReview: Math.round(hoursToReview),
+    avgHangHrs: hangCount > 0 ? Math.round(totalHang / hangCount / 1000 / 3600) : 0,
+  }
+}
+
 async function fetchYsws(filters: Filters = {}) {
   const { status, sortBy = 'newest' } = filters
-
   const now = new Date()
 
   const where: Record<string, unknown> = {}
@@ -78,74 +128,42 @@ async function fetchYsws(filters: Filters = {}) {
   } else if (filters.excludeReviewers?.length) {
     shipCertWhere.reviewer = { username: { notIn: filters.excludeReviewers } }
   }
-
   if (Object.keys(shipCertWhere).length) where.shipCert = shipCertWhere
 
   const orderBy = { createdAt: sortBy === 'oldest' ? 'asc' : 'desc' } as const
 
-  const reviews = await prisma.yswsReview.findMany({
-    where,
-    orderBy,
-    include: {
-      reviewer: { select: { id: true, username: true, avatar: true } },
-      shipCert: {
-        include: {
-          reviewer: { select: { username: true } },
+  const [reviews, stats] = await Promise.all([
+    prisma.yswsReview.findMany({
+      where,
+      orderBy,
+      select: {
+        id: true,
+        shipCertId: true,
+        status: true,
+        devlogs: true,
+        createdAt: true,
+        reviewer: { select: { id: true, username: true, avatar: true } },
+        shipCert: {
+          select: {
+            projectName: true,
+            projectType: true,
+            ftUsername: true,
+            reviewCompletedAt: true,
+            reviewer: { select: { username: true } },
+          },
         },
       },
-    },
-  })
+    }),
+    cache('ysws:global-stats', 300, statsData),
+  ])
 
-  const allReviews = await prisma.yswsReview.findMany({
-    select: {
-      id: true,
-      status: true,
-      devlogs: true,
-      decisions: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  })
-
-  const pending = allReviews.filter((r) => r.status === 'pending').length
-  const done = allReviews.filter((r) => r.status === 'done').length
-  const returned = allReviews.filter((r) => r.status === 'returned').length
-  const total = allReviews.length
-
-  let hoursApproved = 0
-  let hoursRejected = 0
-  let hoursReduced = 0
-  let hoursToReview = 0
-  let totalHang = 0
-  let hangCount = 0
-  for (const r of allReviews) {
-    const devs = (r.devlogs as FtDevlogData[] | null) || []
-    const decs = (r.decisions as Decision[] | null) || []
-    for (const d of decs) {
-      const dev = devs.find((x) => x.ftDevlogId === d.ftDevlogId)
-      const origHrs = dev ? dev.origSecs / 60 / 60 : 0
-      const approvedHrs = (d.approvedMins || 0) / 60
-      if (d.status === 'rejected') {
-        hoursRejected += origHrs
-      } else if (d.status === 'approved') {
-        hoursApproved += approvedHrs
-        if (approvedHrs < origHrs) hoursReduced += origHrs - approvedHrs
-      } else if (d.status === 'pending') {
-        hoursToReview += origHrs
-      }
-    }
-    if (r.status !== 'pending') {
-      totalHang += new Date(r.updatedAt).getTime() - new Date(r.createdAt).getTime()
-      hangCount++
-    }
-  }
-  const avgHangHrs = hangCount > 0 ? Math.round(totalHang / hangCount / 1000 / 60 / 60) : 0
+  const { pending, done, returned, total } = stats
+  const { hoursApproved, hoursRejected, hoursReduced, hoursToReview, avgHangHrs } = stats
 
   const lbMode = filters.lbMode || 'weekly'
   let lbWhere: { status: { in: string[] }; updatedAt?: { gte: Date; lt: Date } } = {
     status: { in: ['done', 'returned'] },
   }
-
   if (lbMode === 'weekly') {
     const day = now.getUTCDay()
     const weekStart = new Date(
@@ -223,10 +241,10 @@ async function fetchYsws(filters: Filters = {}) {
       done,
       returned,
       total,
-      hoursApproved: Math.round(hoursApproved),
-      hoursRejected: Math.round(hoursRejected),
-      hoursReduced: Math.round(hoursReduced),
-      hoursToReview: Math.round(hoursToReview),
+      hoursApproved,
+      hoursRejected,
+      hoursReduced,
+      hoursToReview,
       avgHangHrs,
     },
     leaderboard,
