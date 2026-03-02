@@ -110,7 +110,7 @@ export function useTicket(ticketId: string) {
 
     const socket = io(botUrl, {
       path: '/ws/socket.io',
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: maxRecon,

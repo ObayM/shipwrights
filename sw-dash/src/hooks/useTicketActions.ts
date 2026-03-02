@@ -31,7 +31,7 @@ export function useTicketActions({
   const [showDropdown, setShowDropdown] = useState(false)
 
   const sendReply = async () => {
-    if ((!reply.trim() && files.length === 0) || sending) return
+    if (!reply.trim() && files.length === 0) return
 
     const msgText = reply.trim()
     const msgFiles = files.slice()

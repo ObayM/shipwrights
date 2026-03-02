@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 import { MsgRender } from '@/components/ui/msg-render'
 import { can, PERMS } from '@/lib/perms'
 import { useTicket } from '@/hooks/useTicket'
@@ -367,14 +367,12 @@ export default function TicketDetail() {
                             return (
                               <div
                                 key={idx}
-                                className="border-2 border-amber-700/50 rounded-xl overflow-hidden"
+                                className="border-2 border-amber-700/50 rounded-xl overflow-hidden cursor-pointer"
                                 onClick={() => setLightbox(fileUrl)}
                               >
-                                <Image
+                                <img
                                   src={fileUrl}
                                   alt={file.name}
-                                  width={120}
-                                  height={90}
                                   className="w-24 h-18 object-cover"
                                 />
                               </div>
@@ -484,7 +482,7 @@ export default function TicketDetail() {
                 </button>
                 <button
                   onClick={sendReply}
-                  disabled={sending || (!reply.trim() && files.length === 0)}
+                  disabled={!reply.trim() && files.length === 0}
                   className="bg-gradient-to-br from-amber-900/50 to-amber-950/50 disabled:opacity-50 text-amber-200 px-3 py-2 font-mono text-sm rounded-xl border-2 border-amber-700 shadow-lg shadow-amber-950/30"
                 >
                   ↑
@@ -795,11 +793,9 @@ export default function TicketDetail() {
                                     onClick={() => setLightbox(fileUrl)}
                                   >
                                     <div className="relative">
-                                      <Image
+                                      <img
                                         src={fileUrl}
                                         alt={file.name}
-                                        width={200}
-                                        height={150}
                                         className="w-48 h-36 object-cover"
                                       />
                                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -984,7 +980,7 @@ export default function TicketDetail() {
                     )}
                     <button
                       onClick={sendReply}
-                      disabled={sending || (!reply.trim() && files.length === 0)}
+                      disabled={!reply.trim() && files.length === 0}
                       className="bg-gradient-to-br from-amber-900/50 to-amber-950/50 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 text-amber-200 px-4 py-2 font-mono text-sm rounded-xl border-2 border-amber-700 shadow-lg shadow-amber-950/30 transition-all"
                     >
                       send

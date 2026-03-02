@@ -39,7 +39,7 @@ function formatText(s: string, prefix: string): React.ReactNode {
   return <React.Fragment key={prefix}>{parts}</React.Fragment>
 }
 
-export function MsgRender({ text, users = {} }: Props) {
+export const MsgRender = React.memo(function MsgRender({ text, users = {} }: Props) {
   if (!text) return null
 
   const items: { start: number; end: number; node: React.ReactNode }[] = []
@@ -154,4 +154,4 @@ export function MsgRender({ text, users = {} }: Props) {
   if (pos < text.length) parts.push(formatText(text.slice(pos), `suf${pos}`))
 
   return <>{parts}</>
-}
+})
