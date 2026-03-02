@@ -268,6 +268,7 @@ async function pullMedia(ftMedia: FtDevlog['media']): Promise<Media[]> {
 export async function create(shipCertId: number, ftProjectId: string, repoUrl: string | null) {
   const existing = await prisma.yswsReview.findFirst({
     where: { shipCertId },
+    orderBy: { createdAt: 'desc' },
   })
 
   if (existing && existing.status !== 'returned') {
@@ -354,6 +355,12 @@ export async function create(shipCertId: number, ftProjectId: string, repoUrl: s
       })
     }
   }
+
+  const freshCert = await prisma.shipCert.findUnique({
+    where: { id: shipCertId },
+    select: { status: true },
+  })
+  if (!freshCert || freshCert.status !== 'approved') return null
 
   const ysws = await prisma.yswsReview.create({
     data: {
