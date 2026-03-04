@@ -28,10 +28,16 @@ def show_edit_modal(client, body, message_ts):
         view=views.edit_message(message_ts)
     )
 
-def show_unauthorized_close(client, body):
+def show_unauthorized_close(client, body, access):
     client.views_open(
         trigger_id=body["trigger_id"],
-        view=views.show_unauthorized()
+        view=views.show_unauthorized(access)
+    )
+
+def show_feedback_modal(client, body, ticket_id):
+    client.views_open(
+        trigger_id=body["trigger_id"],
+        view=views.show_rating_form(ticket_id)
     )
 
 def get_user_info(client, user_id):

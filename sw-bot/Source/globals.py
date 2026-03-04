@@ -22,3 +22,14 @@ MACROS = {
     "queue": "Hey there!\nWe currently have a backlog of projects waiting to be certified. Please be patient.\n\n*You can keep track of the queue <https://us.review.hackclub.com/queue | here>!*",
     "declare": "Hey there! We have noticed patterns of AI usage in your project. Please declare AI usage on your project. If you think this is a mistake please let us know!"
 }
+
+RESOLVE_MESSAGES = {
+    "user": "Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket.",
+    "staff": "Hey! Would you look at that, This ticket was marked as resolved by <@(user_id)>!",
+}
+
+USER_CLOSED_MESSAGE = "Hey! So it looks the user closed this ticket. Please claim this ticket if you handled the ticket."
+ALREADY_CLAIMED = "*This ticket is already claimed by <@(user_id)>!*"
+TICKET_CLAIMED = "*This ticket has been claimed by <@(user_id)>!*"
+CANNOT_CLOSE_OWN = "You cannot close your own ticket as a shipwright."
+MESSAGE_NOT_RECEIVED = "Hey! Looks like this ticket was resolved. Shipwrights did not receive your response."

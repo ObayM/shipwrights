@@ -6,6 +6,7 @@ class Cache:
     def __init__(self):
         self.ticket_users = {}
         self.tickets = {}
+        self.feedback = {}
         self.shipwrights = []
         self.ignorable = []
         self.metrics = {
@@ -141,5 +142,23 @@ class Cache:
             return self.shipwrights
         self.shipwrights = db.get_shipwrights()
         return self.shipwrights
+
+    def get_feedback(self, ticket_id):
+        if ticket_id not in self.feedback.keys():
+            feedback_data = db.get_feedback(ticket_id)
+            if not feedback_data:
+                return None
+            self.feedback[ticket_id] = feedback_data
+            return self.feedback[ticket_id]
+        else:
+            return self.feedback[ticket_id]
+
+    def save_feedback(self, ticket_id, rating, comment):
+        db.save_feedback(ticket_id, int(rating), comment)
+        entry = {"rating": int(rating), "comment": comment}
+        if ticket_id in self.feedback:
+            self.feedback[ticket_id].append(entry)
+        else:
+            self.feedback[ticket_id] = [entry]
 
 cache = Cache()

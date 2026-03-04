@@ -1,5 +1,5 @@
 import json, requests, tempfile, time, os
-import db, ai
+import db, ai, msg_blocks
 from globals import STAFF_CHANNEL, USER_CHANNEL, BOT_TOKEN, DASH_URL, API_KEY, BOT_URL, MACROS, client
 from helpers import get_flavortown_project
 from cache import cache
@@ -357,7 +357,7 @@ def handle_staff_reply(event):
         resp = client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=thread,
-            text="ticket closed"
+            text=f"Hey! Would you look at that, This ticket was marked as resolved by <@{user_id}>!"
         )
         db.save_message(ticket["id"], 'BOT', 'Shipwrighter', None, f'ticket closed by <@{user_id}>', True, None, resp["ts"])
         ping_ws(ticket["id"])
@@ -365,7 +365,14 @@ def handle_staff_reply(event):
         client.chat_postMessage(
             channel=USER_CHANNEL,
             thread_ts=ticket["userThreadTs"],
-            text="This ticket has been resolved. If you have any more questions create a new ticket!"
+            text=f"Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket."
+        )
+        client.chat_postMessage(
+            thread_ts=ticket["userThreadTs"],
+            channel=USER_CHANNEL,
+            text="Feedback form!",
+            blocks=msg_blocks.feedback_message(json.dumps(ticket["id"])),
+            username="Shipwrighter Feedback"
         )
     else:
         file_info = []

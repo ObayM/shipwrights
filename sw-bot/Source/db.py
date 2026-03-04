@@ -478,3 +478,40 @@ def get_project_by_ft_id(ft_project_id):
     finally:
         cursor.close()
         db.close()
+
+def save_feedback(ticket_id, rating, comment):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO ticket_feedback (ticketId, rating, comment) VALUES (%s, %s, %s)",
+            (ticket_id, rating, comment or "")
+        )
+        db.commit()
+        return cursor.lastrowid
+    except Exception as e:
+        print(f"couldn't save feedback: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def get_feedback(ticket_id):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor(dictionary=True, buffered=True)
+    try:
+        cursor.execute(
+            "SELECT * FROM ticket_feedback WHERE ticketId = %s ORDER BY createdAt DESC",
+            (ticket_id,)
+        )
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"couldn't get feedback: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()

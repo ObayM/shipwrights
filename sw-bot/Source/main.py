@@ -1,9 +1,9 @@
 import os, json, summary, threading
-import db, helpers, api, home, relay, ai
+import db, helpers, api, home, relay, ai, msg_blocks
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from summary import send_reminder
-from globals import BOT_TOKEN, USER_CHANNEL, STAFF_CHANNEL
+from globals import BOT_TOKEN, USER_CHANNEL, STAFF_CHANNEL, RESOLVE_MESSAGES, USER_CLOSED_MESSAGE, TICKET_CLAIMED, ALREADY_CLAIMED, CANNOT_CLOSE_OWN, MESSAGE_NOT_RECEIVED
 from cache import cache
 
 
@@ -70,7 +70,7 @@ def send_paraphrased(client, body, ack):
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
             user=user_id,
-            text="Hey there! Looks like this ticket was resolved. The user did not receive your response."
+            text= MESSAGE_NOT_RECEIVED
         )
         return
     client.chat_postMessage(
@@ -138,7 +138,7 @@ def resolve_detected(ack, body, client):
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
-            text=f"Hey! Would you look at that, This ticket was marked as resolved by <@{user_id}>!",
+            text=RESOLVE_MESSAGES["staff"].replace("user", user_id),
         )
         client.chat_postMessage(
             channel=USER_CHANNEL,
@@ -150,7 +150,7 @@ def resolve_detected(ack, body, client):
         client.chat_postMessage(
             channel=USER_CHANNEL,
             thread_ts=ticket["userThreadTs"],
-            text=f"Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket.",
+            text=RESOLVE_MESSAGES["user"],
         )
         client.reactions_add(
             channel=STAFF_CHANNEL,
@@ -163,6 +163,13 @@ def resolve_detected(ack, body, client):
             name="checks-passed-octicon"
         )
         client.chat_postMessage(
+            thread_ts=ticket["userThreadTs"],
+            channel=USER_CHANNEL,
+            text="Feedback form!",
+            blocks=msg_blocks.feedback_message(json.dumps(ticket_id)),
+            username="Shipwrighter Feedback"
+        )
+        client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
             text=reply,
@@ -172,7 +179,7 @@ def resolve_detected(ack, body, client):
         if cache.get_user_opt_in(ticket["userId"]):
             ai.summarize_ticket(ticket_id)
     else:
-        helpers.show_unauthorized_close(client, body)
+        helpers.show_unauthorized_close(client, body, "closing")
 
 @slack_app.action("resolve_ticket")
 def resolve_ticket(ack, body, client):
@@ -186,12 +193,12 @@ def resolve_ticket(ack, body, client):
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
-            text= f"Hey! Would you look at that, This ticket was marked as resolved by <@{user_id}>!",
+            text=RESOLVE_MESSAGES["staff"].replace("user", user_id),
         )
         client.chat_postMessage(
             channel=USER_CHANNEL,
             thread_ts=ticket["userThreadTs"],
-            text=f"Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket.",
+            text=RESOLVE_MESSAGES["user"],
         )
         client.reactions_add(
             channel=STAFF_CHANNEL,
@@ -203,6 +210,15 @@ def resolve_ticket(ack, body, client):
             timestamp=ticket["userThreadTs"],
             name="checks-passed-octicon"
         )
+
+        client.chat_postMessage(
+            thread_ts=ticket["userThreadTs"],
+            channel=USER_CHANNEL,
+            text="Feedback form!",
+            blocks=msg_blocks.feedback_message(json.dumps(ticket_id)),
+            username="Shipwrighter Feedback"
+        )
+
         if cache.get_user_opt_in(ticket["userId"]):
             ai.summarize_ticket(ticket_id)
 
@@ -211,12 +227,12 @@ def resolve_ticket(ack, body, client):
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
-            text=f"Hey! Would you look at that, This ticket was marked as resolved by <@{user_id}>!",
+            text=RESOLVE_MESSAGES["staff"].replace("(user)", user_id),
         )
         client.chat_postMessage(
             channel=USER_CHANNEL,
             thread_ts=ticket["userThreadTs"],
-            text=f"Hey! Would you look at that, This ticket was marked as resolved! Shipwrights will no longer receive your messages. If you still have a question, please feel free to open a new ticket.",
+            text=RESOLVE_MESSAGES["user"],
         )
         client.reactions_add(
             channel=STAFF_CHANNEL,
@@ -228,8 +244,18 @@ def resolve_ticket(ack, body, client):
             timestamp=ticket["userThreadTs"],
             name="checks-passed-octicon"
         )
+
+        client.chat_postMessage(
+            thread_ts=ticket["userThreadTs"],
+            channel=USER_CHANNEL,
+            text="Feedback form!",
+            blocks=msg_blocks.feedback_message(json.dumps(ticket_id)),
+            username="Shipwrighter Feedback"
+        )
+
         if cache.get_user_opt_in(ticket["userId"]):
             ai.summarize_ticket(ticket_id)
+
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
@@ -237,7 +263,7 @@ def resolve_ticket(ack, body, client):
             blocks=[
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": "Hey! So it looks the user closed this ticket. Please claim this ticket if you handled the ticket."},
+                    "text": {"type": "mrkdwn", "text": USER_CLOSED_MESSAGE},
                     "accessory": {
                         "type": "button",
                         "text": {"type": "plain_text", "text": "Claim Ticket"},
@@ -254,10 +280,21 @@ def resolve_ticket(ack, body, client):
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
             user=user_id,
-            text="You cannot close your own ticket as a shipwright."
+            text=CANNOT_CLOSE_OWN
         )
     else:
-        helpers.show_unauthorized_close(client, body)
+        helpers.show_unauthorized_close(client, body, "closing")
+
+@slack_app.action("submit_feedback")
+def submit_feedback(ack, body, client):
+    ack()
+    ticket_id = json.loads(body["actions"][0]["value"])
+    ticket = cache.get_ticket_by_id(ticket_id)
+    user_id = body["user"]["id"]
+    if ticket["userId"] != user_id or cache.get_feedback(ticket_id):
+        helpers.show_unauthorized_close(client, body, "feedback")
+    else:
+        helpers.show_feedback_modal(client, body, ticket_id)
 
 @slack_app.action("claim_ticket")
 def claim_ticket(body, client, ack):
@@ -270,21 +307,15 @@ def claim_ticket(body, client, ack):
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
             user=user_id,
-            text=f"*This ticket is already claimed by <@{ticket['closedBy']}>!*"
+            text= ALREADY_CLAIMED.replace("(user_id)", ticket['closedBy'])
         )
     else:
         cache.claim_ticket(ticket_id, user_id)
         client.chat_postMessage(
             channel=STAFF_CHANNEL,
             thread_ts=ticket["staffThreadTs"],
-            text=f"*This ticket has been claimed by <@{user_id}>!*"
+            text= TICKET_CLAIMED.replace("(user_id)", user_id),
         )
-
-@slack_app.command("/swsummary")
-def trigger_summary(command, ack):
-    ack()
-    if command.get("user_id") == "U092F9A8VMY":
-        send_reminder()
 
 @slack_app.view("edited_message")
 def edited_message(ack, client, view):
@@ -298,6 +329,14 @@ def edited_message(ack, client, view):
         text=user_input,
     )
     db.edit_message(message_ts, user_input)
+
+@slack_app.view("rating_form")
+def rating_form(ack, view):
+    ack()
+    ticket_id = view["private_metadata"]
+    rating = view["state"]["values"]["rating_block"]["number_input-action"]["value"]
+    comment = view["state"]["values"]["comment_block"]["plain_text_input-action"]["value"]
+    cache.save_feedback(ticket_id, rating, comment)
 
 def run_bot():
     handler = SocketModeHandler(slack_app, os.getenv("SLACK_APP_TOKEN"))
