@@ -29,6 +29,8 @@ export async function GET(req: Request) {
   const status = searchParams.get('status')
   const type = searchParams.get('type')
   const since = searchParams.get('since')
+  const sinceReviewed = searchParams.get('since_reviewed')
+  const sort = searchParams.get('sort')
   const limitParam = searchParams.get('limit')
 
   let take: number | undefined = undefined
@@ -44,11 +46,15 @@ export async function GET(req: Request) {
     const date = new Date(since)
     if (!isNaN(date.getTime())) where.createdAt = { gt: date }
   }
+  if (sinceReviewed) {
+    const date = new Date(sinceReviewed)
+    if (!isNaN(date.getTime())) where.reviewCompletedAt = { gt: date }
+  }
 
   try {
     const logs = await prisma.shipCert.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { [sort === 'reviewCompletedAt' ? 'reviewCompletedAt' : 'createdAt']: 'desc' },
       take,
       select: {
         id: true,
