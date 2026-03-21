@@ -209,7 +209,7 @@ async function fetchStats(lbMode: string) {
 
   const prevLeaderboard = leaderRows
     .map((r) => ({ id: r.reviewerId, name: r.username || 'unknown', count: norm(r.prevCount) }))
-    .filter((r) => lbMode !== 'weekly' || r.name !== 'System')
+    .filter((r) => r.name !== 'System')
     .sort((a, b) => b.count - a.count)
 
   const prevRankMap = new Map<number, number>()
@@ -222,7 +222,7 @@ async function fetchStats(lbMode: string) {
       count: norm(r.currentCount),
       streak: r.streak || 0,
     }))
-    .filter((r) => lbMode !== 'weekly' || r.name !== 'System')
+    .filter((r) => r.name !== 'System')
     .sort((a, b) => b.count - a.count)
 
   const leaderboard = currentLeaderboard.map((r, i) => {

@@ -88,6 +88,8 @@ export const GET = withParams(PERMS.certs_view)(async ({ user, params }) => {
       ? await prisma.shipCert.findMany({
           where: {
             ftProjectId: cert.ftProjectId,
+            id: { not: cert.id },
+            status: { in: ['approved', 'rejected'] },
           },
           include: {
             reviewer: {
@@ -96,8 +98,8 @@ export const GET = withParams(PERMS.certs_view)(async ({ user, params }) => {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
-          take: 20,
+          orderBy: { reviewCompletedAt: 'desc' },
+          take: 10,
         })
       : []
 
@@ -237,9 +239,14 @@ export const PATCH = withParams(PERMS.certs_edit)(async ({ user, req, params, ip
       }
 
       if (verdict.toLowerCase() === 'approved' || verdict.toLowerCase() === 'rejected') {
-        const payout = await calc(user.id, cert.projectType, cert.customBounty)
+        const payout = await calc({
+          userId: user.id,
+          projectType: cert.projectType,
+          certCreatedAt: cert.createdAt,
+          customBounty: cert.customBounty,
+        })
         updateData.cookiesEarned = payout.cookies
-        updateData.payoutMulti = payout.multi
+        updateData.payoutMulti = Number(payout.multi.toFixed(2))
       }
     }
 
@@ -338,7 +345,7 @@ export const PATCH = withParams(PERMS.certs_edit)(async ({ user, req, params, ip
 
       const todayCount = await prisma.shipCert.count({
         where: {
-          reviewerId: certifierId !== undefined ? certifierId : user.id,
+          reviewerId: user.id,
           status: { in: ['approved', 'rejected'] },
           reviewCompletedAt: {
             gte: startOfTodayUTC,
@@ -347,7 +354,7 @@ export const PATCH = withParams(PERMS.certs_edit)(async ({ user, req, params, ip
       })
 
       if (todayCount >= 7) {
-        const userIdToUpdate = certifierId !== undefined ? certifierId : user.id
+        const userIdToUpdate = user.id
         const currentUser = await prisma.user.findUnique({
           where: { id: userIdToUpdate },
           select: { streak: true, lastReviewDate: true },
