@@ -45,12 +45,12 @@ export async function getMulti(userId: number): Promise<number> {
   let periodEnd: Date
 
   if (PAYOUT_LB_MODE === 'weekly') {
-    const day = now.getDay()
-    periodStart = new Date(now)
-    periodStart.setDate(now.getDate() - day)
-    periodStart.setUTCHours(0, 0, 0, 0)
+    const day = now.getUTCDay()
+    periodStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day, 0, 0, 0, 0)
+    )
     periodEnd = new Date(periodStart)
-    periodEnd.setDate(periodStart.getDate() + 7)
+    periodEnd.setUTCDate(periodStart.getUTCDate() + 7)
   } else {
     // daily mode: 12:00 UTC to 11:59:59 UTC next day
     const daily = getDailyPeriod()

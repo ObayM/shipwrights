@@ -239,8 +239,9 @@ export const PATCH = withParams(PERMS.certs_edit)(async ({ user, req, params, ip
       }
 
       if (verdict.toLowerCase() === 'approved' || verdict.toLowerCase() === 'rejected') {
+        const payoutUserId = certifierId !== undefined ? certifierId : user.id
         const payout = await calc({
-          userId: user.id,
+          userId: payoutUserId,
           projectType: cert.projectType,
           certCreatedAt: cert.createdAt,
           customBounty: cert.customBounty,
@@ -300,9 +301,10 @@ export const PATCH = withParams(PERMS.certs_edit)(async ({ user, req, params, ip
       },
     })
 
+    const cookieRecipientId = certifierId !== undefined ? certifierId : user.id
     if (updateData.cookiesEarned && updateData.cookiesEarned > 0) {
       await prisma.user.update({
-        where: { id: user.id },
+        where: { id: cookieRecipientId },
         data: {
           cookieBalance: { increment: updateData.cookiesEarned },
           cookiesEarned: { increment: updateData.cookiesEarned },
