@@ -372,7 +372,7 @@ export function UserProfile({
               <div>
                 <span className="text-amber-300/50 font-mono text-xs block mb-1">FT ID</span>
                 <a
-                  href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/admin/users/${user.ftuid}`}
+                  href={`https://flavortown.hackclub.com/admin/users/${user.ftuid}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-400 underline font-mono text-xs"

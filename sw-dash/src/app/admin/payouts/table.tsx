@@ -278,7 +278,7 @@ export default function PayoutsTable({ reqs: init }: { reqs: Req[] }) {
                     <span className="text-white">{modal.user.username}</span>
                     {modal.user.ftuid && (
                       <a
-                        href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/admin/users/${modal.user.ftuid}`}
+                        href={`https://flavortown.hackclub.com/admin/users/${modal.user.ftuid}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-purple-400 hover:text-purple-300 border border-purple-700/50 px-1.5 py-0.5 rounded"
@@ -378,7 +378,7 @@ export default function PayoutsTable({ reqs: init }: { reqs: Req[] }) {
                   <span className="text-white">{view.user.username}</span>
                   {view.user.ftuid && (
                     <a
-                      href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/admin/users/${view.user.ftuid}`}
+                      href={`https://flavortown.hackclub.com/admin/users/${view.user.ftuid}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-purple-400 hover:text-purple-300 border border-purple-700/50 px-1.5 py-0.5 rounded"

@@ -309,7 +309,7 @@ export function Review({ data, canEdit, canUndo }: Props) {
               <div>
                 <span className="text-gray-400">Project:</span>{' '}
                 <a
-                  href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/projects/${data.shipCert.ftProjectId}`}
+                  href={`https://flavortown.hackclub.com/projects/${data.shipCert.ftProjectId}`}
                   target="_blank"
                   className="text-amber-400 hover:text-amber-300 underline"
                 >

@@ -367,7 +367,7 @@ export function Form({ shipId }: Props) {
                 <div>
                   <span className="text-gray-400">Project:</span>{' '}
                   <a
-                    href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/projects/${cert.ftId}`}
+                    href={`https://flavortown.hackclub.com/projects/${cert.ftId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-amber-400 hover:text-amber-300 underline"

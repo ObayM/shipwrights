@@ -266,7 +266,7 @@ export default function Case({ caseId }: { caseId: string }) {
               <div className="flex gap-3">
                 {cert.ftProjectId && (
                   <a
-                    href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/projects/${cert.ftProjectId}`}
+                    href={`https://flavortown.hackclub.com/projects/${cert.ftProjectId}`}
                     target="_blank"
                     className="text-blue-400 hover:underline font-mono text-sm"
                   >

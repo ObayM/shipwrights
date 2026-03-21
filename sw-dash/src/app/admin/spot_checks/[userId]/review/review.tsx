@@ -348,7 +348,7 @@ export default function Review({ wrightId }: { wrightId: string }) {
               <div className="flex gap-2 mb-4">
                 {cert.ftProjectId && (
                   <a
-                    href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/projects/${cert.ftProjectId}`}
+                    href={`https://flavortown.hackclub.com/projects/${cert.ftProjectId}`}
                     target="_blank"
                     className="bg-zinc-900/50 border-2 border-amber-900/40 px-3 py-1 rounded-xl font-mono text-sm text-amber-300 hover:border-amber-700/50 transition-colors"
                   >

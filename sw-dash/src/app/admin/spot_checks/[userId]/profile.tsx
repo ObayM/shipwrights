@@ -60,7 +60,7 @@ export default function Profile({ userId }: { userId: string }) {
             </Link>
             {user.ftuid && (
               <a
-                href={`${process.env.NEXT_PUBLIC_FLAVORTOWN_URL}/admin/users/${user.ftuid}`}
+                href={`https://flavortown.hackclub.com/admin/users/${user.ftuid}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full bg-purple-500/10 border-2 border-dashed border-purple-600 hover:border-purple-400 text-purple-400 hover:text-purple-300 font-mono text-sm px-4 py-3 rounded-2xl transition-all hover:bg-purple-500/20 hover:scale-[1.02] active:scale-[0.98] text-center"
