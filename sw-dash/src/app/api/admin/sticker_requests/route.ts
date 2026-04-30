@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
   }
 
   const count = await prisma.stickerRequest.count()
-  if (count >= 100) {
-    return NextResponse.json({ error: 'we hit 100, no more spots left!' }, { status: 400 })
+  if (count >= 125) {
+    return NextResponse.json({ error: 'we hit 125, no more spots left!' }, { status: 400 })
   }
 
   const { ftProjectId } = await req.json()

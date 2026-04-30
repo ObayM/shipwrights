@@ -131,7 +131,7 @@ export default function MakeTheirDay() {
                     FT Project ID
                   </label>
                   <span className="text-zinc-500 font-mono text-xs">
-                    {requests.length}/100 spots taken
+                    {requests.length}/125 spots taken
                   </span>
                 </div>
                 <div className="flex gap-3">
@@ -145,7 +145,7 @@ export default function MakeTheirDay() {
                   />
                   <button
                     type="submit"
-                    disabled={!projectId.trim() || submitting || requests.length >= 100}
+                    disabled={!projectId.trim() || submitting || requests.length >= 125}
                     className="bg-pink-500/20 border-2 border-dashed border-pink-500 hover:border-pink-400 text-pink-300 hover:text-pink-200 font-mono text-sm px-6 py-3 rounded-xl transition-all duration-200 hover:bg-pink-500/30 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
                     {submitting ? '...' : 'Send it!'}
