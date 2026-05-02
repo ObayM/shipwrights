@@ -354,7 +354,7 @@ export function CertsView({ initial }: Props) {
               </button>
             </div>
           </div>
-          <div className="space-y-1.5 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '140px' }}>
+          <div className="space-y-1.5 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '160px' }}>
             {leaderboard.length > 0 ? (
               leaderboard.slice(0, 10).map((r, i) => {
                 const change = r.rankChange
