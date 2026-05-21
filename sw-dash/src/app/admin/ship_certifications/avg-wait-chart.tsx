@@ -19,8 +19,8 @@ interface Props {
 export function AvgWaitChart({ avgQueueTime, history }: Props) {
   const [open, setOpen] = useState(false)
 
-  const formatDate = (date: string) => {
-    const d = new Date(date)
+  const formatDate = (date: unknown) => {
+    const d = new Date(String(date))
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
