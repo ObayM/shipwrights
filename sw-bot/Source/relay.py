@@ -247,6 +247,30 @@ def handle_staff_reply(event):
         client.chat_postMessage(channel=STAFF_CHANNEL, thread_ts=ticket["staff_thread_ts"], text="User has opted out of AI use.")
         return
 
+    if cmd == "!help":
+        macro_list = "\n".join(f"  `!{k}` — {v[:60]}{'…' if len(v) > 60 else ''}" for k, v in MACROS.items())
+        help_text = (
+            "*Shipwrights Bot Commands*\n\n"
+            "*Sending messages*\n"
+            "  `?<text>` — relay a message to the user\n\n"
+            "*Ticket actions*\n"
+            "  `!resolve` — close this ticket\n"
+            "  `!reopen` — reopen a closed ticket\n"
+            "  `!delete <link>` — delete a message from both sides\n"
+            "  `!purge` _(admin)_ — delete all user-side messages and close ticket\n\n"
+            "*AI*\n"
+            "  `!tldr` — generate a ticket summary _(requires user opt-in)_\n"
+            "  `!ai <text>` — AI-paraphrase a reply before sending _(requires user opt-in)_\n\n"
+            f"*Macros* _(send message + auto-close)_\n{macro_list}"
+        )
+        client.chat_postEphemeral(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staff_thread_ts"],
+            user=user_id,
+            text=help_text,
+        )
+        return
+
     if cmd == "!tldr":
         worker.enqueue(client.reactions_add, channel=STAFF_CHANNEL, timestamp=event["ts"], name="white_check_mark")
         ai.summarize_ticket(ticket["id"])
