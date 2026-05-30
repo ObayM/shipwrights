@@ -4,7 +4,7 @@ from slack_sdk.errors import SlackApiError
 import ai, blocks, db, worker
 from cache import cache
 from globals import (
-    ADMINS, BOT_TOKEN, BOT_USER_ID, MACROS, OPEN_TICKET_REACTION,
+    ADMINS, BOT_TOKEN, MACROS, OPEN_TICKET_REACTION,
     RESOLVE_MESSAGES, STAFF_CHANNEL, USER_CHANNEL, client,
 )
 # from helpers import get_flavortown_project  # ship_certs
@@ -28,7 +28,7 @@ def clear_reactions(ticket):
         try:
             resp = client.reactions_get(channel=channel, timestamp=ts)
             for reaction in resp.get("message", {}).get("reactions", []):
-                if BOT_USER_ID and BOT_USER_ID not in reaction.get("users", []):
+                if cache.bot_user_id and cache.bot_user_id not in reaction.get("users", []):
                     continue
                 try:
                     client.reactions_remove(channel=channel, timestamp=ts, name=reaction["name"])

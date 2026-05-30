@@ -8,6 +8,7 @@ DEFAULT_TTL = 7200.0
 
 class Cache:
     def __init__(self):
+        self.bot_user_id: str | None = None
         self.sticky_message_ts = None
         self.meta_sticky_ts = None
         self.ticket_users: dict = {}

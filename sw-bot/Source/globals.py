@@ -7,7 +7,6 @@ load_dotenv()
 BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 
 client = WebClient(token=BOT_TOKEN)
-BOT_USER_ID = os.getenv("BOT_USER_ID")
 REMINDERS_CHANNEL = os.getenv("REMINDER_CHANNEL_ID", "C09TTRZH94Z")
 APP_ID = os.getenv("APP_ID")
 ANNOUNCE_META = os.getenv("ANNOUNCE_META", "false").lower() == "true"

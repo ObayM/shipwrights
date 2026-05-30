@@ -1,7 +1,7 @@
 import logging, uuid, queue
 from typing import Callable
 from slack_sdk.errors import SlackApiError
-import blocks, cache as cache_mod, db, task_journal
+import blocks, cache, db, task_journal
 from globals import META_CHANNEL, USER_CHANNEL, client
 from helpers import find_meta_sticky_from_history, find_sticky_from_history
 
@@ -52,7 +52,7 @@ class Worker:
             self.tasks.append("update_meta_sticky")
 
     def update_sticky_message(self):
-        c = cache_mod.cache
+        c = cache.cache
         if not c.sticky_message_ts:
             history = client.conversations_history(channel=USER_CHANNEL, limit=5)["messages"]
             c.sticky_message_ts = find_sticky_from_history(history)
@@ -74,7 +74,7 @@ class Worker:
             logger.error(f"Failed to post user sticky error={e.response['error']}")
 
     def update_meta_sticky(self):
-        c = cache_mod.cache
+        c = cache.cache
         if not c.meta_sticky_ts:
             history = client.conversations_history(channel=META_CHANNEL, limit=10)["messages"]
             c.meta_sticky_ts = find_meta_sticky_from_history(history)

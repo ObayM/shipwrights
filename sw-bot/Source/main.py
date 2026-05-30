@@ -5,8 +5,8 @@ from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from slack_sdk.signature import SignatureVerifier
 import alerts, errors, raffle, summary, worker
-import globals as globals_mod
-from globals import ENVIRONMENT, PORT
+from cache import cache
+from globals import ENVIRONMENT, PORT, client
 from handlers import (
     handle_claim_ticket, handle_create_meta, handle_delete_message, handle_delete_meta,
     handle_edit_message, handle_edited_message, handle_message, handle_meta_command,
@@ -55,7 +55,7 @@ VIEW_HANDLERS = {
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    globals_mod.BOT_USER_ID = globals_mod.client.auth_test()["user_id"]
+    cache.bot_user_id = client.auth_test()["user_id"]
     worker.load_and_replay()
     worker.task_runner.enqueue_sticky_message_update()
     worker.task_runner.enqueue_meta_sticky_update()
