@@ -3,7 +3,8 @@ from typing import Callable
 from slack_sdk.errors import SlackApiError
 import blocks, cache, db, task_journal
 from globals import META_CHANNEL, USER_CHANNEL, client
-from helpers import find_meta_sticky_from_history, find_sticky_from_history
+from helpers import find_meta_sticky_from_history
+# from helpers import find_sticky_from_history  # user sticky
 
 logger = logging.getLogger("worker")
 
@@ -43,35 +44,33 @@ class Worker:
     def __init__(self):
         self.tasks: list = []
 
-    def enqueue_sticky_message_update(self):
-        if "update_sticky_message" not in self.tasks:
-            self.tasks.append("update_sticky_message")
+    # def enqueue_sticky_message_update(self):  # user sticky
+    #     if "update_sticky_message" not in self.tasks:
+    #         self.tasks.append("update_sticky_message")
 
     def enqueue_meta_sticky_update(self):
         if "update_meta_sticky" not in self.tasks:
             self.tasks.append("update_meta_sticky")
 
-    def update_sticky_message(self):
-        c = cache.cache
-        if not c.sticky_message_ts:
-            history = client.conversations_history(channel=USER_CHANNEL, limit=5)["messages"]
-            c.sticky_message_ts = find_sticky_from_history(history)
-            if c.sticky_message_ts:
-                logger.info(f"Located user sticky via history fallback ts={c.sticky_message_ts}")
-
-        if c.sticky_message_ts:
-            try:
-                client.chat_delete(ts=c.sticky_message_ts, channel=USER_CHANNEL)
-            except SlackApiError as e:
-                logger.warning(f"Could not delete user sticky ts={c.sticky_message_ts} error={e.response['error']}")
-                c.sticky_message_ts = None
-
-        try:
-            resp = client.chat_postMessage(channel=USER_CHANNEL, text="Create Help Ticket Now!", blocks=blocks.aide_message())
-            c.sticky_message_ts = resp["ts"]
-            logger.info(f"User sticky updated ts={resp['ts']}")
-        except SlackApiError as e:
-            logger.error(f"Failed to post user sticky error={e.response['error']}")
+    # def update_sticky_message(self):  # user sticky
+    #     c = cache.cache
+    #     if not c.sticky_message_ts:
+    #         history = client.conversations_history(channel=USER_CHANNEL, limit=5)["messages"]
+    #         c.sticky_message_ts = find_sticky_from_history(history)
+    #         if c.sticky_message_ts:
+    #             logger.info(f"Located user sticky via history fallback ts={c.sticky_message_ts}")
+    #     if c.sticky_message_ts:
+    #         try:
+    #             client.chat_delete(ts=c.sticky_message_ts, channel=USER_CHANNEL)
+    #         except SlackApiError as e:
+    #             logger.warning(f"Could not delete user sticky ts={c.sticky_message_ts} error={e.response['error']}")
+    #             c.sticky_message_ts = None
+    #     try:
+    #         resp = client.chat_postMessage(channel=USER_CHANNEL, text="Create Help Ticket Now!", blocks=blocks.aide_message())
+    #         c.sticky_message_ts = resp["ts"]
+    #         logger.info(f"User sticky updated ts={resp['ts']}")
+    #     except SlackApiError as e:
+    #         logger.error(f"Failed to post user sticky error={e.response['error']}")
 
     def update_meta_sticky(self):
         c = cache.cache
@@ -111,9 +110,9 @@ class Worker:
                 working_copy, self.tasks = self.tasks, []
                 for task in working_copy:
                     try:
-                        if task == "update_sticky_message":
-                            self.update_sticky_message()
-                        elif task == "update_meta_sticky":
+                        # if task == "update_sticky_message":  # user sticky
+                        #     self.update_sticky_message()
+                        if task == "update_meta_sticky":
                             self.update_meta_sticky()
                     except Exception as e:
                         logger.exception(f"Unhandled error in task={task}: {e}")

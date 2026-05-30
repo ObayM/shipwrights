@@ -35,13 +35,13 @@ def raffle_winners(month_name: str, winners: list) -> list:
 def meta_create_button():
     return [
         {"type": "header", "text": {"type": "plain_text", "text": "Shipwrights Meta", "emoji": True}},
-        {"type": "section", "text": {"type": "mrkdwn", "text": "Have something to discuss with the team?"}},
+        {"type": "section", "text": {"type": "mrkdwn", "text": "Keep us up at night!"}},
         {
             "type": "actions",
             "elements": [
                 {
                     "type": "button",
-                    "text": {"type": "plain_text", "text": "Create Meta Post", "emoji": True},
+                    "text": {"type": "plain_text", "text": "Meta us.", "emoji": True},
                     "style": "primary",
                     "action_id": "open_create_meta",
                 }

@@ -12,6 +12,8 @@ from helpers import (
 
 
 def handle_message(event: dict) -> None:
+    if event.get("bot_id"):
+        return
     subtype = event.get("subtype")
     if subtype and subtype not in ("file_share", "message_changed", "thread_broadcast", "message_deleted"):
         return

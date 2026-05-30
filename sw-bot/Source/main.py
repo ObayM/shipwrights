@@ -57,7 +57,6 @@ VIEW_HANDLERS = {
 async def lifespan(_: FastAPI):
     cache.bot_user_id = client.auth_test()["user_id"]
     worker.load_and_replay()
-    worker.task_runner.enqueue_sticky_message_update()
     worker.task_runner.enqueue_meta_sticky_update()
     for target, name in [
         (summary.reminders_loop, "reminders"),
