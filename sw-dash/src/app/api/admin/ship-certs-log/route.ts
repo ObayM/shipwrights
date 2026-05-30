@@ -85,6 +85,7 @@ export async function GET(req: Request) {
   const sinceReviewed = searchParams.get('since_reviewed')
   const sort = searchParams.get('sort')
   const limitParam = searchParams.get('limit')
+  const reviewerId = searchParams.get('reviewerId')
 
   let take: number | undefined = undefined
   if (limitParam) {
@@ -104,6 +105,10 @@ export async function GET(req: Request) {
     if (!isNaN(date.getTime())) where.reviewCompletedAt = { gt: date }
   }
 
+  if (reviewerId) {
+    const parsed = parseInt(reviewerId, 10)
+    if (!isNaN(parsed)) where.reviewerId = parsed
+  }
   try {
     const logs = await prisma.shipCert.findMany({
       where,

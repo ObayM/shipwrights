@@ -325,7 +325,7 @@ export function YswsView({ initial }: Props) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl min-h-[200px]">
+        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl min-h-[200px] max-h-[432px]">
           <h2 className="text-amber-400 font-mono text-base md:text-lg mb-4">Stats</h2>
           <div className="space-y-3">
             <div className="flex justify-between">
@@ -373,7 +373,7 @@ export function YswsView({ initial }: Props) {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl min-h-[200px]">
+        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl min-h-[200px] max-h-[432px] flex flex-col">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-amber-400 font-mono text-base md:text-lg">Leaderboard</h2>
             <div className="flex gap-1">
@@ -391,7 +391,7 @@ export function YswsView({ initial }: Props) {
               </button>
             </div>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto flex-1 pr-4">
             {leaderboard.length > 0 ? (
               leaderboard.map((r, i) => (
                 <div key={r.name} className="flex justify-between items-center text-sm font-mono">
@@ -410,11 +410,11 @@ export function YswsView({ initial }: Props) {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl min-h-[200px]">
+        <div className="bg-gradient-to-br from-zinc-900/90 to-black/90 border-4 border-amber-900/40 rounded-3xl p-4 md:p-6 shadow-xl min-h-[200px] max-h-[432px] flex flex-col">
           <h2 className="text-amber-400 font-mono text-base md:text-lg mb-4">Devlog Reviews</h2>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-y-auto flex-1 pr-4">
             {devlogLeaderboard.length > 0 ? (
-              devlogLeaderboard.slice(0, 10).map((r, i) => (
+              devlogLeaderboard.map((r, i) => (
                 <div
                   key={r.reviewerId}
                   className="flex justify-between items-center text-sm font-mono"
