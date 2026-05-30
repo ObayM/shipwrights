@@ -1,12 +1,14 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY Source/ ./Source/
 
-EXPOSE 45100
+WORKDIR /app/Source
 
-CMD ["python", "Source/main.py"]
+EXPOSE 3000
+
+CMD ["python", "main.py"]

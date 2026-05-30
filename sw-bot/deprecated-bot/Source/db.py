@@ -1,0 +1,709 @@
+import math, json
+from datetime import datetime, timedelta
+import pytz
+from globals import TICKET_PAY, DB_USER, DB_HOST, DB_NAME, DB_PORT, DB_PASSWORD
+from dotenv import load_dotenv
+from mysql.connector import pooling
+
+load_dotenv()
+
+db_pool = pooling.MySQLConnectionPool(
+    pool_name="bot_pool",
+    pool_size=5,
+    host=DB_HOST,
+    port=DB_PORT,
+    user=DB_USER,
+    password=DB_PASSWORD,
+    database=DB_NAME,
+)
+
+def _format_seconds(seconds):
+    if seconds <= 0 or seconds is None:
+        return "0s"
+    days, rem = divmod(seconds, 86400)
+    hours, rem = divmod(rem, 3600)
+    minutes, secs = divmod(rem, 60)
+    parts = []
+    if days:
+        parts.append(f"{days}d")
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if secs or not parts:
+        parts.append(f"{secs}s")
+    return " ".join(parts)
+
+def _get_est_day_range_utc(days_back=1):
+    """Return (start_utc, next_day_start_utc) for the EST calendar day `days_back` days ago.
+    E.g. days_back=1 gives yesterday 00:00 EST and today 00:00 EST in UTC."""
+    est = pytz.timezone("US/Eastern")
+    now_est = datetime.now(est)
+    target_date = (now_est - timedelta(days=days_back)).date()
+    start_est = est.localize(datetime.combine(target_date, datetime.min.time()))
+    next_day_est = start_est + timedelta(days=1)
+    return start_est.astimezone(pytz.utc).replace(tzinfo=None), next_day_est.astimezone(pytz.utc).replace(tzinfo=None)
+
+def _period_where_clause(period):
+    p = (period or "all").lower()
+    if p == "all":
+        return None
+    if p == "day":
+        return ("closedAt >= (NOW() - INTERVAL 1 DAY)",)
+    if p == "week":
+        return ("closedAt >= (NOW() - INTERVAL 7 DAY)",)
+    if p == "month":
+        return ("closedAt >= (NOW() - INTERVAL 1 MONTH)",)
+
+
+def get_db():
+    try:
+        return db_pool.get_connection()
+    except Exception as e:
+        print(f"db connection fucked up: {e}")
+        return None
+
+def save_ticket(user_id, user_name, user_avatar, question, user_thread, staff_thread):
+    db = get_db()
+    if not db:
+        return None
+    
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO tickets (userId, userName, userAvatar, question, userThreadTs, staffThreadTs, status) VALUES (%s, %s, %s, %s, %s, %s, 'open')",
+            (user_id, user_name, user_avatar, question, user_thread, staff_thread)
+        )
+        db.commit()
+        ticket_id = cursor.lastrowid
+        return ticket_id
+    except Exception as e:
+        print(f"shit broke when saving ticket: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def save_message(ticket_id, sender_id, sender_name, sender_avatar, msg, from_staff, files=None, message_ts=None, origin_message_ts=None):
+    db = get_db()
+    if not db:
+        return
+    
+    cursor = db.cursor()
+    try:
+        files_json = json.dumps(files) if files else None
+        cursor.execute(
+            "INSERT INTO ticket_msgs (ticketId, senderId, senderName, senderAvatar, msg, files, isStaff, messageTs, originMessageTs) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (ticket_id, sender_id, sender_name, sender_avatar, msg, files_json, from_staff, message_ts, origin_message_ts)
+        )
+        db.commit()
+    except Exception as e:
+        print(f"couldnt save message lol: {e}")
+    finally:
+        cursor.close()
+        db.close()
+
+def get_ticket(ticket_id):
+    db = get_db()
+    if not db:
+        return None
+
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM tickets WHERE id = %s", (ticket_id,))
+        return cursor.fetchone()
+    except Exception as  e:
+        print(f"couldnt get ticket: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def find_ticket(thread):
+    db = get_db()
+    if not db:
+        return None
+    
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM tickets WHERE staffThreadTs = %s OR userThreadTs = %s", (thread, thread))
+        return cursor.fetchone()
+    except Exception as e:
+        print(f"ticket lookup failed: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def claim_ticket(ticket_id, closer):
+    db = get_db()
+    if not db:
+        return False
+
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "UPDATE tickets SET closedBy = %s WHERE id = %s",
+            (closer ,ticket_id,)
+        )
+        db.commit()
+        return True
+    except Exception as e:
+        print(f"couldn't close ticket: {e}")
+        return False
+    finally:
+        cursor.close()
+        db.close()
+
+
+def close_ticket(ticket_id):
+    db = get_db()
+    if not db:
+        return False
+    
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "UPDATE tickets SET status = 'closed', closedAt = NOW() WHERE id = %s",
+            (ticket_id,)
+        )
+        db.commit()
+        return True
+    except Exception as e:
+        print(f"couldn't close ticket: {e}")
+        return False
+    finally:
+        cursor.close()
+        db.close()
+
+
+def shipped_projects(time="all", status="approved"):
+    db = get_db()
+    if not db:
+        return "DB seems to be down :/"
+    cursor = db.cursor()
+    try:
+        if time == "all":
+            cursor.execute("SELECT COUNT(*) FROM ship_certs WHERE status = %s", (status,))
+        elif time == "day":
+            cursor.execute("SELECT COUNT(*) FROM ship_certs WHERE status = %s AND reviewCompletedAt >= (NOW() - INTERVAL 1 DAY)",(status,),)
+        elif time == "week":
+            cursor.execute("SELECT COUNT(*) FROM ship_certs WHERE status = %s AND reviewCompletedAt >= (NOW() - INTERVAL 7 DAY)",(status,),)
+        elif time == "month":
+            cursor.execute("SELECT COUNT(*) FROM ship_certs WHERE status = %s AND reviewCompletedAt >= (NOW() - INTERVAL 1 MONTH)",(status,),)
+        row = cursor.fetchone()
+        return int(row[0] or 0)
+
+    except Exception as e:
+        return f"Error occurred, {e}"
+    finally:
+        cursor.close()
+        db.close()
+
+def avg_close_time(period="all"):
+    db = get_db()
+    if not db:
+        return "DB seems to be down :/"
+    cursor = db.cursor()
+    try:
+        where = _period_where_clause(period)
+        if where is None:
+            sql = "SELECT AVG(TIMESTAMPDIFF(SECOND, createdAt, closedAt)) FROM tickets WHERE status = %s AND closedAt IS NOT NULL"
+            params = ("closed",)
+        else:
+            sql = f"SELECT AVG(TIMESTAMPDIFF(SECOND, createdAt, closedAt)) FROM tickets WHERE status = %s AND closedAt IS NOT NULL AND {where[0]}"
+            params = ("closed",)
+        cursor.execute(sql, params)
+        row = cursor.fetchone()
+        avg_seconds = None
+        if row:
+            try:
+                avg_seconds = int(math.floor(float(row[0]))) if row[0] is not None else None
+            except Exception:
+                avg_seconds = None
+        return _format_seconds(avg_seconds if avg_seconds is not None else 0)
+    except Exception:
+        return "N/A"
+    finally:
+        cursor.close()
+        db.close()
+
+def count_tickets(status = "all"):
+    db = get_db()
+    if not db:
+        return 0
+    cursor = db.cursor()
+    try:
+        s = (status or "all").lower()
+        if s == "all":
+            cursor.execute("SELECT COUNT(*) FROM tickets")
+        elif s in ("open", "closed"):
+            cursor.execute("SELECT COUNT(*) FROM tickets WHERE status = %s", (s,))
+        row = cursor.fetchone()
+        return int(row[0] or 0)
+    except Exception:
+        return 0
+    finally:
+        cursor.close()
+        db.close()
+
+def get_shipwrights():
+    db = get_db()
+    if not db:
+        return ["DB seems to be down :/"]
+    cursor = db.cursor()
+    try:
+        cursor.execute("SELECT slackId FROM users WHERE isActive = 1")
+        rows = cursor.fetchall()
+        return [row[0] for row in rows]
+    except Exception:
+        return []
+    finally:
+        cursor.close()
+        db.close()
+
+
+def add_cookies(slack_id, ticket_id=None, amount=TICKET_PAY):
+    db = get_db()
+    if not db or not slack_id:
+        return None
+
+    try:
+        increment = float(amount)
+    except (TypeError, ValueError):
+        return None
+
+    if increment <= 0:
+        return None
+
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """
+            UPDATE users
+            SET cookieBalance = cookieBalance + %s,
+                cookiesEarned = cookiesEarned + %s
+            WHERE slackId = %s
+            """,
+            (increment, increment, slack_id),
+        )
+        if cursor.rowcount == 0:
+            db.rollback()
+            return None
+
+        cursor.execute(
+            "SELECT id, username, role, avatar, cookieBalance FROM users WHERE slackId = %s",
+            (slack_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            db.rollback()
+            return None
+
+        cursor.execute(
+            """
+            INSERT INTO sys_logs (
+                userId, slackId, username, role, action, context, statusCode,
+                avatar, targetId, targetType, metadata
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                row["id"],
+                slack_id,
+                row.get("username"),
+                row.get("role"),
+                "ticket_cookie_payout",
+                f"Awarded {increment:.2f} cookies for claiming a ticket",
+                200,
+                row.get("avatar"),
+                ticket_id,
+                "ticket" if ticket_id else "user",
+                json.dumps({"source": "sw-bot", "amount": increment, "ticketId": ticket_id}),
+            ),
+        )
+
+        db.commit()
+        return float(row["cookieBalance"]) if row.get("cookieBalance") is not None else 0.0
+    except Exception as e:
+        print(f"couldn't increment user balance: {e}")
+        db.rollback()
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def edit_message(message_ts, new_text):
+    db = get_db()
+    if not db:
+        return
+    cursor = db.cursor()
+    try:
+        cursor.execute("UPDATE ticket_msgs SET msg = %s WHERE messageTS = %s", (new_text, message_ts))
+        db.commit()
+    except Exception as e:
+        print(f"edit_message broke: {e}")
+        db.rollback()
+    finally:
+        cursor.close()
+        db.close()
+
+def insert_project_type(ft_project_id, project_type):
+    db = get_db()
+    if not db:
+        print("DB seems to be down :/")
+        return
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "UPDATE ship_certs SET projectType = %s WHERE ftProjectId = %s",
+            (project_type, ft_project_id)
+        )
+        db.commit()
+    except Exception as e:
+        print(f"Error updating project type: {e}")
+        db.rollback()
+    finally:
+        cursor.close()
+        db.close()
+
+def recent_reviews():
+    db = get_db()
+    if not db:
+        return {"yesterday": 0, "day_before": 0}
+    cursor = db.cursor()
+    try:
+        y_start, y_end = _get_est_day_range_utc(1)
+        db_start, db_end = _get_est_day_range_utc(2)
+        cursor.execute("""
+            SELECT 
+                SUM(CASE WHEN reviewCompletedAt >= %s AND reviewCompletedAt < %s THEN 1 ELSE 0 END) AS yesterday,
+                SUM(CASE WHEN reviewCompletedAt >= %s AND reviewCompletedAt < %s THEN 1 ELSE 0 END) AS day_before
+            FROM ship_certs
+            WHERE reviewCompletedAt IS NOT NULL
+        """, (y_start, y_end, db_start, db_end))
+        row = cursor.fetchone()
+        return {
+            "yesterday": int(row[0] or 0),
+            "day_before": int(row[1] or 0)
+        }
+    except Exception as e:
+        print(f"Error fetching review counts: {e}")
+        return {"yesterday": 0, "day_before": 0}
+    finally:
+        cursor.close()
+        db.close()
+
+
+def shipped_yesterday():
+    db = get_db()
+    if not db:
+        return 0
+    cursor = db.cursor()
+    try:
+        y_start, y_end = _get_est_day_range_utc(1)
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM ship_certs
+            WHERE createdAt >= %s AND createdAt < %s
+        """, (y_start, y_end))
+        row = cursor.fetchone()
+        return int(row[0] or 0)
+    except Exception as e:
+        print(f"Error fetching ships created in last 24h: {e}")
+        return 0
+    finally:
+        cursor.close()
+        db.close()
+
+
+def top_reviewer_yesterday():
+    db = get_db()
+    if not db:
+        return {"slack_ids": [], "counts": []}
+    cursor = db.cursor()
+    try:
+        y_start, y_end = _get_est_day_range_utc(1)
+        cursor.execute("""
+            SELECT u.slackId, COUNT(*) AS review_count
+            FROM ship_certs s
+            JOIN users u ON s.reviewerId = u.id
+            WHERE s.reviewCompletedAt >= %s AND s.reviewCompletedAt < %s
+              AND s.reviewCompletedAt IS NOT NULL
+              AND s.reviewerId IS NOT NULL
+            GROUP BY s.reviewerId
+            ORDER BY review_count DESC
+            LIMIT 3
+        """, (y_start, y_end))
+        rows = cursor.fetchall()
+        slack_ids = [row[0] for row in rows]
+        counts = [row[1] for row in rows]
+        return {"slack_ids": slack_ids, "counts": counts}
+    except Exception as e:
+        print(f"Error fetching top reviewer: {e}")
+        return {"slack_ids": [], "counts": []}
+    finally:
+        cursor.close()
+        db.close()
+
+def get_dest_message_ts(message_ts):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT messageTs FROM ticket_msgs WHERE originMessageTs = %s", (message_ts,))
+        row = cursor.fetchone()
+        return row.get("messageTs") if row else None
+    except Exception as e:
+        print(f"couldn't get destMessageTs: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def open_ticket(ticket_id):
+    db = get_db()
+    if not db:
+        return False
+
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "UPDATE tickets SET status = 'open' WHERE id = %s",
+            (ticket_id,)
+        )
+        db.commit()
+        return True
+    except Exception as e:
+        print(f"couldn't close ticket: {e}")
+        return False
+    finally:
+        cursor.close()
+        db.close()
+
+def get_ticket_user(user_id):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM ticket_users WHERE userId = %s", (user_id,))
+        row = cursor.fetchone()
+        return row if row else None
+    except Exception as e:
+        print(f"couldn't get ticket user info: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def create_ticket_user(user_id):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO ticket_users (userId, isOptedIn) VALUES (%s, %s)",
+            (user_id, True)
+        )
+        db.commit()
+        return cursor.lastrowid
+    except Exception as e:
+        print(f"couldn't create ticket user: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def update_ticket_user_opt(user_id, state: bool):
+    db = get_db()
+    if not db:
+        return False
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "UPDATE ticket_users SET isOptedIn = %s WHERE userId = %s",
+            (state, user_id)
+        )
+        db.commit()
+        return cursor.rowcount > 0
+    except Exception as e:
+        print(f"couldn't update ticket user opt in: {e}")
+        return False
+    finally:
+        cursor.close()
+        db.close()
+
+def get_project_by_ft_id(ft_project_id):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor(dictionary=True, buffered=True)
+    try:
+        cursor.execute("SELECT * FROM ship_certs WHERE ftProjectId = %s ORDER BY id DESC LIMIT 1", (ft_project_id,))
+        row = cursor.fetchone()
+        return row if row else None
+    except Exception as e:
+        print(f"couldn't get project by ft id: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def save_feedback(ticket_id, rating, comment):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO ticket_feedback (ticketId, rating, comment) VALUES (%s, %s, %s)",
+            (ticket_id, rating, comment or "")
+        )
+        db.commit()
+        return cursor.lastrowid
+    except Exception as e:
+        print(f"couldn't save feedback: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def get_feedback(ticket_id):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor(dictionary=True, buffered=True)
+    try:
+        cursor.execute(
+            "SELECT * FROM ticket_feedback WHERE ticketId = %s ORDER BY createdAt DESC",
+            (ticket_id,)
+        )
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"couldn't get feedback: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def get_unresolved_tickets_past_24h():
+    db = get_db()
+    if not db:
+        return []
+    cursor = db.cursor(dictionary=True, buffered=True)
+    try:
+        cursor.execute("SELECT * FROM tickets WHERE status = 'open' AND createdAt <= (NOW() - INTERVAL 1 DAY)")
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"obays code couldnt get past 24h tickets: {e}")
+        return []
+    finally:
+        cursor.close()
+        db.close()
+
+def get_daily_ticket_stats():
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor(dictionary=True, buffered=True)
+    
+    try:
+        cursor.execute("SELECT COUNT(*) as count FROM tickets WHERE createdAt >= (NOW() - INTERVAL 1 DAY)")
+        opened_24h = cursor.fetchone()["count"]
+        
+        cursor.execute("SELECT COUNT(*) as count FROM tickets WHERE status = 'closed' AND closedAt >= (NOW() - INTERVAL 1 DAY)")
+        closed_24h = cursor.fetchone()["count"]
+        
+        cursor.execute("SELECT COUNT(*) as count FROM tickets WHERE status = 'open'")
+        total_open = cursor.fetchone()["count"]
+        
+        cursor.execute("""
+            SELECT closedBy as slackId, COUNT(*) as count 
+            FROM tickets 
+            WHERE status = 'closed' AND closedAt >= (NOW() - INTERVAL 1 DAY) AND closedBy IS NOT NULL 
+            GROUP BY closedBy 
+            ORDER BY count DESC 
+            LIMIT 3
+        """)
+        leaderboard = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT t.id, t.userId, t.question, t.staffThreadTs, t.createdAt, 
+                   (SELECT MAX(createdAt) FROM ticket_msgs WHERE ticketId = t.id) as last_reply 
+            FROM tickets t 
+            WHERE t.status = 'open' AND t.createdAt <= (NOW() - INTERVAL 1 DAY) 
+            ORDER BY t.createdAt ASC 
+            LIMIT 11
+        """)
+        old_tickets = cursor.fetchall()
+
+        return {
+            "opened_24h": opened_24h,
+            "closed_24h": closed_24h,
+            "total_open": total_open,
+            "leaderboard": leaderboard,
+            "old_tickets": old_tickets
+        }
+    except Exception as e:
+        print(f"Error fetching daily ticket stats: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def save_meta(text, meta_message_ts=None, votes_message_ts=None):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO meta_posts (text, metaMessageTs, votesMessageTs) VALUES (%s, %s, %s)",
+            (text, meta_message_ts, votes_message_ts)
+        )
+        db.commit()
+        return cursor.lastrowid
+    except Exception as e:
+        print(f"couldn't save meta: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def update_meta_votes(meta_message_ts, delta):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor()
+    try:
+        cursor.execute(
+            "UPDATE meta_posts SET votes = votes + %s WHERE metaMessageTs = %s",
+            (delta, meta_message_ts)
+        )
+        db.commit()
+        cursor.execute("SELECT votes FROM meta_posts WHERE metaMessageTs = %s", (meta_message_ts,))
+        row = cursor.fetchone()
+        return int(row[0]) if row else None
+    except Exception as e:
+        print(f"couldn't update meta votes: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()
+
+def find_meta_by_meta_ts(meta_message_ts):
+    db = get_db()
+    if not db:
+        return None
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM meta_posts WHERE metaMessageTs = %s", (meta_message_ts,))
+        return cursor.fetchone()
+    except Exception as e:
+        print(f"couldn't find meta by meta ts: {e}")
+        return None
+    finally:
+        cursor.close()
+        db.close()

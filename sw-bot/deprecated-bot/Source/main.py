@@ -1,0 +1,475 @@
+import os, json, summary, threading, logging
+import db, helpers, api, home, relay, ai, msg_blocks, alerts
+from slack_bolt import App
+from slack_bolt.adapter.socket_mode import SocketModeHandler
+from globals import BOT_TOKEN, USER_CHANNEL, STAFF_CHANNEL, RESOLVE_MESSAGES, USER_CLOSED_MESSAGE, TICKET_CLAIMED, \
+    ALREADY_CLAIMED, CANNOT_CLOSE_OWN, MESSAGE_NOT_RECEIVED, META_CHANNEL, ENVIRONMENT, ADMINS, OPEN_TICKET_REACTION
+from cache import cache
+from worker import worker
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+slack_app = App(token=BOT_TOKEN, signing_secret=os.getenv("SLACK_SIGNING_SECRET"), process_before_response=True)
+seen = set()
+MAX_SEEN = 1000
+
+
+def seen_already(event_id):
+    if event_id in seen:
+        return True
+    seen.add(event_id)
+    if len(seen) > MAX_SEEN:
+        seen.pop()
+    return False
+
+
+@slack_app.event("message")
+def msg(event):
+    if seen_already(event.get("client_msg_id") or event.get("event_ts")):
+        return
+    subtype = event.get("subtype")
+    if subtype and subtype not in ["file_share", "message_changed", "thread_broadcast", "message_deleted"]:
+        return
+    channel = event["channel"]
+    if subtype == "message_changed":
+        if channel != USER_CHANNEL or event.get("previous_message").get("ts") in cache.ignorable:
+            if event.get("previous_message").get("ts") in cache.ignorable:
+                cache.ignorable.remove(event.get("previous_message").get("ts"))
+            return
+        relay.edit_message(event)
+        return
+    # worker.enqueue_sticky_message_update()
+    if not event.get("text") and event.get("attachments", [{}])[0].get("is_share", False):
+        event["text"] = event.get("attachments", [{}])[0].get("text")
+    if channel == USER_CHANNEL:
+        if relay.handle_client_reply(event):
+            pass
+        else:
+            relay.create_ticket(event)
+    elif channel == STAFF_CHANNEL:
+        relay.handle_staff_reply(event)
+
+
+@slack_app.event("app_home_opened")
+def render_app_home(event):
+    user_id = event.get("user")
+    if not user_id:
+        return
+    if user_id in cache.get_shipwrights():
+        home.publish_home(user_id, home.show_home())
+        return
+    home.publish_home(user_id, home.not_user())
+    return
+
+
+@slack_app.action("send_paraphrased")
+def send_paraphrased(client, body, ack):
+    ack()
+    payload = json.loads(body["actions"][0]["value"])
+    user_id = body["user"]["id"]
+    user_info = helpers.get_user_info(client, user_id)
+    ticket_id = payload["ticket_id"]
+    paraphrased = payload["paraphrased"]
+    ticket = cache.get_ticket_by_id(ticket_id)
+    if ticket.get("status") == "closed":
+        client.chat_postEphemeral(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            user=user_id,
+            text=MESSAGE_NOT_RECEIVED
+        )
+        return
+    client.chat_postMessage(
+        channel=USER_CHANNEL,
+        text=f"{paraphrased}",
+        thread_ts=ticket["userThreadTs"],
+        username=f"{user_info['username']} | Shipwrights Team",
+        icon_url=user_info["pfp"],
+    )
+    staff_resp = client.chat_postMessage(
+        channel=STAFF_CHANNEL,
+        text=f"{paraphrased}",
+        thread_ts=ticket["staffThreadTs"],
+        username=f"{user_info['username']} | AI Paraphrased",
+        icon_url=user_info["pfp"],
+    )
+    db.save_message(ticket_id, user_id, f"{user_info['username']} | AI Paraphrased", user_info["pfp"], paraphrased,
+                    True, None, staff_resp["ts"])
+    relay.ping_ws(ticket_id)
+
+
+@slack_app.action("delete_message")
+def delete_message(ack, body, client, respond):
+    ack()
+    payload = json.loads(body["actions"][0]["value"])
+    message_ts = payload["ts"]
+    if type(message_ts) == str:
+        client.chat_delete(channel=USER_CHANNEL, ts=message_ts)
+        respond("Deleted message")
+    elif isinstance(message_ts, list):
+        for ts in message_ts:
+            client.chat_delete(channel=USER_CHANNEL, ts=ts)
+        respond("Attachments deleted")
+
+
+@slack_app.action("edit_message")
+def edit_message(ack, body, client):
+    ack()
+    payload = json.loads(body["actions"][0]["value"])
+    message_ts = payload["ts"]
+    helpers.show_edit_modal(client, body, message_ts)
+
+
+@slack_app.action("modify_opt")
+def modify_opt(ack, body, client):
+    ack()
+    payload = json.loads(body["actions"][0]["value"])
+    user_id = body["user"]["id"]
+    cache.modify_user_opt(user_id, int(payload["opt"]))
+    client.chat_postEphemeral(
+        text=f"Successfully {'opted in!' if payload == '1' else 'opted out!'}",
+        thread_ts=payload["thread_ts"],
+        channel=USER_CHANNEL,
+        user=user_id,
+    )
+
+
+@slack_app.action("resolve_detected")
+def resolve_detected(ack, body, client):
+    ack()
+    payload = json.loads(body["actions"][0]["value"])
+    ticket_id = payload["ticket_id"]
+    reply = payload["reply"]
+    user_id = body["user"]["id"]
+    ticket = cache.get_ticket_by_id(ticket_id)
+    user_info = helpers.get_user_info(client, user_id)
+    if ticket["status"] == "open":
+        cache.close_ticket(ticket_id)
+        cache.claim_ticket(ticket_id, user_id)
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text=RESOLVE_MESSAGES["staff"].replace("(user_id)", user_id),
+        )
+        client.chat_postMessage(
+            channel=USER_CHANNEL,
+            thread_ts=ticket["userThreadTs"],
+            text=reply,
+            username=f"{user_info['username']} | Shipwrights Team",
+            icon_url=user_info["pfp"],
+        )
+        client.chat_postMessage(
+            channel=USER_CHANNEL,
+            thread_ts=ticket["userThreadTs"],
+            text=RESOLVE_MESSAGES["user"],
+        )
+        client.reactions_add(
+            channel=STAFF_CHANNEL,
+            timestamp=ticket["staffThreadTs"],
+            name="checks-passed-octicon"
+        )
+        client.reactions_add(
+            channel=USER_CHANNEL,
+            timestamp=ticket["userThreadTs"],
+            name="checks-passed-octicon"
+        )
+
+        try:
+            client.reactions_remove(
+                channel=USER_CHANNEL,
+                timestamp=ticket["userThreadTs"],
+                name=OPEN_TICKET_REACTION
+            )
+            client.reactions_remove(
+                channel=STAFF_CHANNEL,
+                timestamp=ticket["staffThreadTs"],
+                name=OPEN_TICKET_REACTION
+            )
+        except Exception as e:
+            print(f"Failed to remove open ticket reaction: {e}")
+        client.chat_postMessage(
+            thread_ts=ticket["userThreadTs"],
+            channel=USER_CHANNEL,
+            text="Feedback form!",
+            blocks=msg_blocks.feedback_message(json.dumps(ticket_id)),
+            username="Shipwrighter Feedback"
+        )
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text=reply,
+            username=f"{user_info['username']} | AI Auto Detection",
+            icon_url=user_info["pfp"],
+        )
+        if cache.get_user_opt_in(ticket["userId"]):
+            ai.summarize_ticket(ticket_id)
+    else:
+        helpers.show_unauthorized_close(client, body, "closing")
+
+
+@slack_app.action("resolve_ticket")
+def resolve_ticket(ack, body, client):
+    ack()
+    ticket_id = json.loads(body["actions"][0]["value"])
+    ticket = cache.get_ticket_by_id(ticket_id)
+    user_id = body["user"]["id"]
+    if (helpers.is_shipwright(user_id) and user_id != ticket["userId"]) and ticket["status"] == "open":
+        cache.close_ticket(ticket_id)
+        cache.claim_ticket(ticket_id, user_id)
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text=RESOLVE_MESSAGES["staff"].replace("(user_id)", user_id),
+        )
+        client.chat_postMessage(
+            channel=USER_CHANNEL,
+            thread_ts=ticket["userThreadTs"],
+            text=RESOLVE_MESSAGES["user"],
+        )
+        client.reactions_add(
+            channel=STAFF_CHANNEL,
+            timestamp=ticket["staffThreadTs"],
+            name="checks-passed-octicon"
+        )
+        client.reactions_add(
+            channel=USER_CHANNEL,
+            timestamp=ticket["userThreadTs"],
+            name="checks-passed-octicon"
+        )
+
+        client.chat_postMessage(
+            thread_ts=ticket["userThreadTs"],
+            channel=USER_CHANNEL,
+            text="Feedback form!",
+            blocks=msg_blocks.feedback_message(json.dumps(ticket_id)),
+            username="Shipwrighter Feedback"
+        )
+        try:
+            client.reactions_remove(
+                channel=USER_CHANNEL,
+                timestamp=ticket["userThreadTs"],
+                name=OPEN_TICKET_REACTION
+            )
+            client.reactions_remove(
+                channel=STAFF_CHANNEL,
+                timestamp=ticket["staffThreadTs"],
+                name=OPEN_TICKET_REACTION
+            )
+        except Exception as e:
+            print(f"Failed to remove open ticket reaction: {e}")
+
+        if cache.get_user_opt_in(ticket["userId"]):
+            ai.summarize_ticket(ticket_id)
+
+    elif (user_id == ticket["userId"] and not helpers.is_shipwright(user_id)) and ticket["status"] == "open":
+        cache.close_ticket(ticket_id)
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text=RESOLVE_MESSAGES["staff"].replace("(user_id)", user_id),
+        )
+        client.chat_postMessage(
+            channel=USER_CHANNEL,
+            thread_ts=ticket["userThreadTs"],
+            text=RESOLVE_MESSAGES["user"],
+        )
+        try:
+            client.reactions_remove(
+                channel=USER_CHANNEL,
+                timestamp=ticket["userThreadTs"],
+                name=OPEN_TICKET_REACTION
+            )
+            client.reactions_remove(
+                channel=STAFF_CHANNEL,
+                timestamp=ticket["staffThreadTs"],
+                name=OPEN_TICKET_REACTION
+            )
+        except Exception as e:
+            print(f"Failed to remove open ticket reaction: {e}")
+        client.reactions_add(
+            channel=STAFF_CHANNEL,
+            timestamp=ticket["staffThreadTs"],
+            name="checks-passed-octicon"
+        )
+        client.reactions_add(
+            channel=USER_CHANNEL,
+            timestamp=ticket["userThreadTs"],
+            name="checks-passed-octicon"
+        )
+
+        client.chat_postMessage(
+            thread_ts=ticket["userThreadTs"],
+            channel=USER_CHANNEL,
+            text="Feedback form!",
+            blocks=msg_blocks.feedback_message(json.dumps(ticket_id)),
+            username="Shipwrighter Feedback"
+        )
+
+        if cache.get_user_opt_in(ticket["userId"]):
+            ai.summarize_ticket(ticket_id)
+
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text="",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": USER_CLOSED_MESSAGE},
+                    "accessory": {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "Claim Ticket"},
+                        "style": "primary",
+                        "value": str(ticket_id),
+                        "action_id": "claim_ticket"
+                    }
+                },
+            ]
+        )
+
+    elif helpers.is_shipwright(user_id) and user_id == ticket["userId"]:
+        client.chat_postEphemeral(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            user=user_id,
+            text=CANNOT_CLOSE_OWN
+        )
+    else:
+        helpers.show_unauthorized_close(client, body, "closing")
+
+
+@slack_app.action("submit_feedback")
+def submit_feedback(ack, body, client):
+    ack()
+    ticket_id = json.loads(body["actions"][0]["value"])
+    ticket = cache.get_ticket_by_id(ticket_id)
+    user_id = body["user"]["id"]
+    if ticket["userId"] != user_id or cache.get_feedback(ticket_id):
+        helpers.show_unauthorized_close(client, body, "feedback")
+    else:
+        helpers.show_feedback_modal(client, body, ticket_id)
+
+
+@slack_app.action("claim_ticket")
+def claim_ticket(body, client, ack):
+    ack()
+    ticket_id = json.loads(body["actions"][0]["value"])
+    ticket = cache.get_ticket_by_id(ticket_id)
+    user_id = body["user"]["id"]
+    if cache.is_ticket_claimed(ticket_id):
+        client.chat_postEphemeral(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            user=user_id,
+            text=ALREADY_CLAIMED.replace("(user_id)", ticket['closedBy'])
+        )
+    else:
+        cache.claim_ticket(ticket_id, user_id)
+        client.chat_postMessage(
+            channel=STAFF_CHANNEL,
+            thread_ts=ticket["staffThreadTs"],
+            text=TICKET_CLAIMED.replace("(user_id)", user_id),
+        )
+
+
+@slack_app.view("edited_message")
+def edited_message(ack, client, view):
+    ack()
+    message_ts = view["private_metadata"]
+    user_input = view["state"]["values"]["input_block"]["user_input"]["value"]
+    cache.ignorable.append(message_ts)
+    client.chat_update(
+        channel=USER_CHANNEL,
+        ts=message_ts,
+        text=user_input,
+    )
+    db.edit_message(message_ts, user_input)
+
+
+@slack_app.view("rating_form")
+def rating_form(ack, view):
+    ack()
+    ticket_id = view["private_metadata"]
+    rating = view["state"]["values"]["rating_block"]["number_input-action"]["value"]
+    comment = view["state"]["values"]["comment_block"]["plain_text_input-action"]["value"]
+    cache.save_feedback(ticket_id, rating, comment)
+
+
+@slack_app.command("/metasw" if ENVIRONMENT == "PRODUCTION" else "/metastaging")
+def meta_us(ack, client, respond, body):
+    ack()
+    user_id = body["user_id"]
+    if helpers.is_shipwright(user_id):
+        text = body["text"]
+        meta_resp = client.chat_postMessage(
+            channel=META_CHANNEL,
+            blocks=msg_blocks.meta_message_blocks(text, user_id),
+            text="Shipwright Meta",
+            username="Shipwright Meta"
+        )
+        meta_ts = meta_resp["ts"]
+        vote_resp = client.chat_postMessage(
+            channel=META_CHANNEL,
+            blocks=msg_blocks.meta_votes_message(0, meta_ts),
+            text="Vote on this meta",
+            username="Shipwright Meta",
+            thread_ts=meta_ts
+        )
+        cache.save_meta(text, meta_ts, vote_resp["ts"])
+    else:
+        respond("You are not a shipwright!")
+
+
+@slack_app.action("modify_votes")
+def modify_votes(ack, body, client):
+    ack()
+    user_id = body["user"]["id"]
+    payload = json.loads(body["actions"][0]["value"])
+    meta_message_ts = payload["meta_ts"]
+    delta = payload["direction"]
+    result = cache.add_vote(meta_message_ts, user_id, delta)
+    if result is False:
+        return
+    if result is None:
+        return
+    meta = cache.get_meta_by_meta_ts(meta_message_ts)
+    client.chat_update(
+        channel=META_CHANNEL,
+        ts=meta["votes_message_ts"],
+        blocks=msg_blocks.meta_votes_message(result, meta_message_ts),
+        text="Vote on this meta"
+    )
+
+
+@slack_app.action("delete_meta")
+def delete_meta(ack, body, client):
+    ack()
+    user_id = body["user"]["id"]
+    if user_id not in ADMINS:
+        return
+    meta_message_ts = body["actions"][0]["value"]
+    meta = cache.get_meta_by_meta_ts(meta_message_ts)
+    if meta:
+        client.chat_delete(channel=META_CHANNEL, ts=meta["votes_message_ts"])
+    client.chat_delete(channel=META_CHANNEL, ts=meta_message_ts)
+
+
+def run_bot():
+    handler = SocketModeHandler(slack_app, os.getenv("SLACK_APP_TOKEN"))
+    handler.start()
+
+
+if __name__ == "__main__":
+    reminder_thread = threading.Thread(target=summary.reminders_loop, daemon=True)
+    server_thread = threading.Thread(target=api.run_server, daemon=True)
+    alerts_thread = threading.Thread(target=alerts.alerts_loop, daemon=True)
+    worker_thread = threading.Thread(target=worker.run, daemon=True)
+    server_thread.start()
+    reminder_thread.start()
+    alerts_thread.start()
+    worker_thread.start()
+    run_bot()
