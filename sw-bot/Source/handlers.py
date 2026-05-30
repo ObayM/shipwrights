@@ -33,6 +33,9 @@ def handle_message(event: dict) -> None:
             relay.create_ticket(event)
     elif channel == STAFF_CHANNEL:
         relay.handle_staff_reply(event)
+    elif channel == META_CHANNEL:
+        if not event.get("thread_ts"):
+            worker.task_runner.enqueue_meta_sticky_update()
 
 
 def handle_send_paraphrased(payload: dict) -> None:

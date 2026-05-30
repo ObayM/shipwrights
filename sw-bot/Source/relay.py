@@ -189,7 +189,7 @@ def handle_staff_reply(event):
                 thread_ts=thread,
                 blocks=blocks.sent_files_controls(uploaded),
             )
-        worker.enqueue(client.reactions_add, channel=STAFF_CHANNEL, timestamp=event["ts"], name="white_check_mark")
+        worker.enqueue(client.reactions_add, channel=STAFF_CHANNEL, timestamp=event["ts"], name="heavy_check_mark")
         return
 
     cmd = text.strip().lower().split()[0] if text.strip() else ""
