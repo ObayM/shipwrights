@@ -4,7 +4,7 @@ from slack_sdk.errors import SlackApiError
 import ai, blocks, db, worker
 from cache import cache
 from globals import (
-    ADMINS, BOT_TOKEN, MACROS, OPEN_TICKET_REACTION,
+    ADMINS, BOT_TOKEN, BOT_USER_ID, MACROS, OPEN_TICKET_REACTION,
     RESOLVE_MESSAGES, STAFF_CHANNEL, USER_CHANNEL, client,
 )
 # from helpers import get_flavortown_project  # ship_certs
@@ -19,6 +19,21 @@ def swap_reactions(client_inst, ticket, add_name, remove_name):
             pass
         try:
             client_inst.reactions_remove(channel=channel, timestamp=ts, name=remove_name)
+        except SlackApiError:
+            pass
+
+
+def clear_reactions(ticket):
+    for channel, ts in [(STAFF_CHANNEL, ticket["staff_thread_ts"]), (USER_CHANNEL, ticket["user_thread_ts"])]:
+        try:
+            resp = client.reactions_get(channel=channel, timestamp=ts)
+            for reaction in resp.get("message", {}).get("reactions", []):
+                if BOT_USER_ID and BOT_USER_ID not in reaction.get("users", []):
+                    continue
+                try:
+                    client.reactions_remove(channel=channel, timestamp=ts, name=reaction["name"])
+                except SlackApiError:
+                    pass
         except SlackApiError:
             pass
 
@@ -310,7 +325,7 @@ def handle_staff_reply(event):
                 break
         cache.close_ticket(ticket["id"])
         cache.claim_ticket(ticket["id"], user_id)
-        swap_reactions(client, ticket, "checks-passed-octicon", OPEN_TICKET_REACTION)
+        clear_reactions(ticket)
         client.chat_postEphemeral(
             channel=STAFF_CHANNEL, thread_ts=ticket["staff_thread_ts"],
             user=user_id, text=f"Purged {deleted} messages and closed ticket.",
@@ -339,13 +354,13 @@ def handle_staff_reply(event):
             )
             return
         link_channel, link_ts = parsed
-        if link_channel != USER_CHANNEL:
+        if link_channel not in (USER_CHANNEL, STAFF_CHANNEL):
             client.chat_postEphemeral(
                 channel=STAFF_CHANNEL, thread_ts=ticket["staff_thread_ts"],
-                user=user_id, text="Link must point to a message in the user channel.",
+                user=user_id, text="Link must point to a message in the user or staff channel.",
             )
             return
-        if link_ts == ticket["user_thread_ts"]:
+        if link_ts in (ticket["user_thread_ts"], ticket["staff_thread_ts"]):
             client.chat_postEphemeral(
                 channel=STAFF_CHANNEL, thread_ts=ticket["staff_thread_ts"],
                 user=user_id, text="Cannot delete the ticket header message.",
@@ -357,17 +372,22 @@ def handle_staff_reply(event):
                 user=user_id, text="That message does not belong to this ticket.",
             )
             return
-        try:
-            client.chat_delete(channel=USER_CHANNEL, ts=link_ts)
-            client.chat_postEphemeral(
-                channel=STAFF_CHANNEL, thread_ts=ticket["staff_thread_ts"],
-                user=user_id, text="Message deleted.",
-            )
-        except SlackApiError as e:
-            client.chat_postEphemeral(
-                channel=STAFF_CHANNEL, thread_ts=ticket["staff_thread_ts"],
-                user=user_id, text=f"Could not delete message: {e.response['error']}",
-            )
+        linked_ts = db.get_linked_message_ts(link_ts)
+        user_ts = link_ts if link_channel == USER_CHANNEL else linked_ts
+        staff_ts = link_ts if link_channel == STAFF_CHANNEL else linked_ts
+        deleted = []
+        for ch, ts in ((USER_CHANNEL, user_ts), (STAFF_CHANNEL, staff_ts)):
+            if not ts:
+                continue
+            try:
+                client.chat_delete(channel=ch, ts=ts)
+                deleted.append("user" if ch == USER_CHANNEL else "staff")
+            except SlackApiError:
+                pass
+        client.chat_postEphemeral(
+            channel=STAFF_CHANNEL, thread_ts=ticket["staff_thread_ts"],
+            user=user_id, text=f"Deleted from: {', '.join(deleted)}." if deleted else "Could not delete message.",
+        )
         return
 
     file_info = [{"name": f.get("name"), "url": f.get("url_private"), "mimetype": f.get("mimetype"), "size": f.get("size")} for f in files] if files else None
