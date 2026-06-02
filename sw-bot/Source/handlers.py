@@ -1,15 +1,48 @@
 import json
+from time import monotonic
 import ai, blocks, db, errors, relay, views, worker
 from slack_sdk.errors import SlackApiError
 from cache import cache
 from globals import (
-    ADMINS, CANNOT_CLOSE_OWN, ALREADY_CLAIMED, MESSAGE_NOT_RECEIVED, META_CHANNEL,
+    ADMINS, CANNOT_CLOSE_OWN, ALREADY_CLAIMED, ERROR_DM_USER, MESSAGE_NOT_RECEIVED, META_CHANNEL,
     OPEN_TICKET_REACTION, STAFF_CHANNEL, TICKET_CLAIMED, USER_CHANNEL, client,
 )
 from helpers import (
     get_user_info, is_shipwright, respond,
     show_edit_modal, show_feedback_modal, show_unauthorized_close,
 )
+
+
+def _handle_admin_dm(event: dict) -> None:
+    if event.get("user") != ERROR_DM_USER:
+        return
+    text = (event.get("text") or "").strip()
+    if text == "!cache_dump":
+        client.chat_postMessage(
+            channel=ERROR_DM_USER,
+            text="Cache dump ready.",
+            blocks=blocks.cache_dump_trigger(),
+        )
+
+
+def handle_cache_dump_view(payload: dict) -> None:
+    now = monotonic()
+    data = {
+        "bot_user_id": cache.bot_user_id,
+        "sticky_message_ts": cache.sticky_message_ts,
+        "meta_sticky_ts": cache.meta_sticky_ts,
+        "tickets": dict(cache.tickets),
+        "ticket_users": dict(cache.ticket_users),
+        "feedback": {k: len(v) for k, v in cache.feedback.items()},
+        "meta_count": len(cache.metas),
+        "shipwrights": list(cache.shipwrights),
+        "ignorable_count": len(cache.ignorable),
+        "deleted_headers_count": len(cache.deleted_headers),
+        "closed_notified_count": len(cache.closed_notified),
+        "metrics": dict(cache.metrics),
+        "fetch_ages": {k: int(now - t) for k, t in cache.fetch_times.items()},
+    }
+    client.views_open(trigger_id=payload["trigger_id"], view=views.cache_dump(data))
 
 
 def handle_message(event: dict) -> None:
@@ -19,6 +52,9 @@ def handle_message(event: dict) -> None:
     if subtype and subtype not in ("file_share", "message_changed", "thread_broadcast", "message_deleted"):
         return
     channel = event["channel"]
+    if channel.startswith("D"):
+        _handle_admin_dm(event)
+        return
     if subtype == "message_changed":
         prev_ts = event.get("previous_message", {}).get("ts")
         if channel != USER_CHANNEL or prev_ts in cache.ignorable:

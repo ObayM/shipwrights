@@ -537,6 +537,20 @@ def error_dm(level: str, name: str, short: str, error_id: str) -> list:
     ]
 
 
+def cache_dump_trigger():
+    return [
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "Cache dump ready."},
+            "accessory": {
+                "type": "button",
+                "text": {"type": "plain_text", "text": "View Cache"},
+                "action_id": "open_cache_dump",
+            },
+        }
+    ]
+
+
 def error_modal(full: str) -> dict:
     return {
         "type": "modal",

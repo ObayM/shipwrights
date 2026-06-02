@@ -24,6 +24,7 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "PRODUCTION")
 OPEN_TICKET_REACTION = os.getenv("OPEN_TICKET_REACTION", "frog-diabolical")
 ERROR_DM_USER = os.getenv("ERROR_DM_USER", "")
 TASK_JOURNAL_PATH = os.getenv("TASK_JOURNAL_PATH", "task_journal.jsonl")
+CACHE_SNAPSHOT_PATH = os.getenv("CACHE_SNAPSHOT_PATH", "cache_snapshot.json")
 PORT = int(os.getenv("PORT", "3000"))
 
 MACROS = {

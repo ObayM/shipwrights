@@ -4,15 +4,15 @@ from urllib.parse import parse_qs
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from slack_sdk.signature import SignatureVerifier
-import alerts, errors, raffle, summary, worker
+import alerts, cache_store, errors, raffle, summary, worker
 from cache import cache
-from globals import ENVIRONMENT, PORT, client
+from globals import ENVIRONMENT, ERROR_DM_USER, PORT, client
 from handlers import (
-    handle_claim_ticket, handle_create_meta, handle_delete_message, handle_delete_meta,
-    handle_edit_message, handle_edited_message, handle_message, handle_meta_command,
-    handle_modify_opt, handle_modify_votes, handle_open_create_meta, handle_rating_form,
-    handle_reopen_ticket, handle_resolve_detected, handle_resolve_ticket, handle_send_paraphrased,
-    handle_submit_feedback, handle_view_error,
+    handle_cache_dump_view, handle_claim_ticket, handle_create_meta, handle_delete_message,
+    handle_delete_meta, handle_edit_message, handle_edited_message, handle_message,
+    handle_meta_command, handle_modify_opt, handle_modify_votes, handle_open_create_meta,
+    handle_rating_form, handle_reopen_ticket, handle_resolve_detected, handle_resolve_ticket,
+    handle_send_paraphrased, handle_submit_feedback, handle_view_error,
 )
 from helpers import seen_already
 
@@ -32,6 +32,7 @@ COMMAND_HANDLERS = {
 }
 
 ACTION_HANDLERS = {
+    "open_cache_dump": handle_cache_dump_view,
     "send_paraphrased": handle_send_paraphrased,
     "delete_message": handle_delete_message,
     "edit_message": handle_edit_message,
@@ -57,6 +58,12 @@ VIEW_HANDLERS = {
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     cache.bot_user_id = client.auth_test()["user_id"]
+    cache_store.load(cache)
+    if ERROR_DM_USER:
+        try:
+            client.chat_postMessage(channel=ERROR_DM_USER, text="Bot redeployed and online.")
+        except Exception as e:
+            logging.error(f"Failed to send redeploy DM: {e}")
     worker.load_and_replay()
     worker.task_runner.enqueue_meta_sticky_update()
     for target, name in [
@@ -67,6 +74,8 @@ async def lifespan(_: FastAPI):
     ]:
         threading.Thread(target=target, daemon=True, name=name).start()
     yield
+    cache_store.save(cache)
+    logging.info("Cache saved on shutdown")
 
 
 app = FastAPI(lifespan=lifespan)

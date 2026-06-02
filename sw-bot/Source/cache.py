@@ -214,4 +214,34 @@ class Cache:
         return (meta["upvotes"], meta["downvotes"])
 
 
+    def snapshot(self) -> dict:
+        with self._lock:
+            return {
+                "tickets": dict(self.tickets),
+                "ticket_users": dict(self.ticket_users),
+                "feedback": {k: list(v) for k, v in self.feedback.items()},
+                "metas": {k: {**v, "voters": dict(v["voters"])} for k, v in self.metas.items()},
+                "shipwrights": list(self.shipwrights),
+                "metrics": dict(self.metrics),
+                "sticky_message_ts": self.sticky_message_ts,
+                "meta_sticky_ts": self.meta_sticky_ts,
+                "fetch_times": dict(self.fetch_times),
+            }
+
+    def restore(self, data: dict) -> None:
+        with self._lock:
+            self.tickets = data.get("tickets", {})
+            self.ticket_users = data.get("ticket_users", {})
+            self.feedback = data.get("feedback", {})
+            self.metas = {
+                k: {**v, "voters": dict(v.get("voters", {}))}
+                for k, v in data.get("metas", {}).items()
+            }
+            self.shipwrights = data.get("shipwrights", [])
+            self.metrics.update(data.get("metrics", {}))
+            self.sticky_message_ts = data.get("sticky_message_ts")
+            self.meta_sticky_ts = data.get("meta_sticky_ts")
+            self.fetch_times = data.get("fetch_times", {})
+
+
 cache = Cache()

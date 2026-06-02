@@ -98,6 +98,82 @@ def show_rating_form(ticket_id):
     }
 
 
+def cache_dump(data: dict) -> dict:
+    def section(text):
+        return {"type": "section", "text": {"type": "mrkdwn", "text": str(text)[:3000]}}
+
+    def header(text):
+        return {"type": "header", "text": {"type": "plain_text", "text": str(text)[:150]}}
+
+    divider = {"type": "divider"}
+    b = []
+
+    b += [header("System"), section(
+        f"*Bot:* `{data['bot_user_id'] or 'unknown'}`\n"
+        f"*Paused:* `{data['metrics'].get('paused', False)}`\n"
+        f"*Sticky TS:* `{data['sticky_message_ts'] or 'none'}`\n"
+        f"*Meta Sticky TS:* `{data['meta_sticky_ts'] or 'none'}`"
+    ), divider]
+
+    tickets = data["tickets"]
+    b.append(header(f"Tickets ({len(tickets)})"))
+    if tickets:
+        lines = [
+            f"`{t['id']}` <@{t['user_id']}> _{t['status']}_ — {(t.get('question') or '')[:40]}"
+            for t in tickets.values()
+        ]
+        b.append(section("\n".join(lines)))
+    else:
+        b.append(section("_none_"))
+    b.append(divider)
+
+    users = data["ticket_users"]
+    b.append(header(f"Ticket Users ({len(users)})"))
+    if users:
+        lines = [f"<@{uid}>: opted {'in' if opted else 'out'}" for uid, opted in users.items()]
+        b.append(section("\n".join(lines)))
+    else:
+        b.append(section("_none_"))
+    b.append(divider)
+
+    fb = data["feedback"]
+    total_fb = sum(fb.values())
+    b.append(header(f"Feedback ({total_fb} entries, {len(fb)} tickets)"))
+    if fb:
+        lines = [f"Ticket `{tid}`: {count} entr{'y' if count == 1 else 'ies'}" for tid, count in fb.items()]
+        b.append(section("\n".join(lines)))
+    else:
+        b.append(section("_none_"))
+    b.append(divider)
+
+    sw = data["shipwrights"]
+    b += [header(f"Shipwrights ({len(sw)})"), section(" ".join(f"<@{uid}>" for uid in sw) or "_none_"), divider]
+
+    b += [header(f"Metas ({data['meta_count']}) — redacted"), section("_content redacted_"), divider]
+
+    ages = data["fetch_ages"]
+    b.append(header("Cache Freshness"))
+    if ages:
+        lines = [f"`{k}` — {v}s ago" for k, v in sorted(ages.items(), key=lambda x: x[1])]
+        b.append(section("\n".join(lines)))
+    else:
+        b.append(section("_no cached keys_"))
+    b.append(divider)
+
+    b += [header("Misc"), section(
+        f"*Ignorable:* {data['ignorable_count']}\n"
+        f"*Deleted Headers:* {data['deleted_headers_count']}\n"
+        f"*Closed Notified:* {data['closed_notified_count']}"
+    )]
+
+    return {
+        "type": "modal",
+        "title": {"type": "plain_text", "text": "Cache Dump"},
+        "close": {"type": "plain_text", "text": "Close"},
+        "blocks": b,
+    }
+
+
 def create_meta_form():
     return {
         "type": "modal",
